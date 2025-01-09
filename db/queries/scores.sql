@@ -1,0 +1,219 @@
+-- name: CreateScore :one
+insert into scores (
+    score_id,
+    beatmap_id,
+    song_id,
+    user_id,
+    accuracy,
+    max_combo,
+    dx_score,
+    tap_critical,
+    tap_perfect,
+    tap_great,
+    tap_good,
+    tap_miss,
+    hold_critical,
+    hold_perfect,
+    hold_great,
+    hold_good,
+    hold_miss,
+    slide_critical,
+    slide_perfect,
+    slide_great,
+    slide_good,
+    slide_miss,
+    touch_critical,
+    touch_perfect,
+    touch_great,
+    touch_good,
+    touch_miss,
+    break_critical,
+    break_perfect,
+    break_great,
+    break_good,
+    break_miss,
+    fast,
+    late,
+    played_at,
+    created_at
+)
+values (
+    $1, $2, $3, $4, $5, $6, $7,
+    $8, $9, $10, $11, $12,
+    $13, $14, $15, $16, $17,
+    $18, $19, $20, $21, $22,
+    $23, $24, $25, $26, $27,
+    $28, $29, $30, $31, $32,
+    $33, $34, $35, now()
+)
+returning *;
+
+-- name: GetAllScores :many
+select
+    score_id,
+    beatmap_id,
+    song_id,
+    user_id,
+    accuracy,
+    max_combo,
+    dx_score,
+    tap_critical,
+    tap_perfect,
+    tap_great,
+    tap_good,
+    tap_miss,
+    hold_critical,
+    hold_perfect,
+    hold_great,
+    hold_good,
+    hold_miss,
+    slide_critical,
+    slide_perfect,
+    slide_great,
+    slide_good,
+    slide_miss,
+    touch_critical,
+    touch_perfect,
+    touch_great,
+    touch_good,
+    touch_miss,
+    break_critical,
+    break_perfect,
+    break_great,
+    break_good,
+    break_miss,
+    fast,
+    late,
+    played_at,
+    created_at
+from scores;
+
+-- name: GetScoreByUserID :many
+select
+    score_id,
+    beatmap_id,
+    song_id,
+    user_id,
+    accuracy,
+    max_combo,
+    dx_score,
+    tap_critical,
+    tap_perfect,
+    tap_great,
+    tap_good,
+    tap_miss,
+    hold_critical,
+    hold_perfect,
+    hold_great,
+    hold_good,
+    hold_miss,
+    slide_critical,
+    slide_perfect,
+    slide_great,
+    slide_good,
+    slide_miss,
+    touch_critical,
+    touch_perfect,
+    touch_great,
+    touch_good,
+    touch_miss,
+    break_critical,
+    break_perfect,
+    break_great,
+    break_good,
+    break_miss,
+    fast,
+    late,
+    played_at,
+    created_at
+from scores
+where user_id = $1;
+
+-- name: GetScoreByMaiID :many
+select scores.*
+from scores
+inner join users on scores.user_id = users.user_id
+where users.game_name = $1 and users.tag_line = $2;
+
+-- name: GetScoreByID :one
+select
+    score_id,
+    beatmap_id,
+    song_id,
+    user_id,
+    accuracy,
+    max_combo,
+    dx_score,
+    tap_critical,
+    tap_perfect,
+    tap_great,
+    tap_good,
+    tap_miss,
+    hold_critical,
+    hold_perfect,
+    hold_great,
+    hold_good,
+    hold_miss,
+    slide_critical,
+    slide_perfect,
+    slide_great,
+    slide_good,
+    slide_miss,
+    touch_critical,
+    touch_perfect,
+    touch_great,
+    touch_good,
+    touch_miss,
+    break_critical,
+    break_perfect,
+    break_great,
+    break_good,
+    break_miss,
+    fast,
+    late,
+    played_at,
+    created_at
+from scores
+where score_id = $1;
+
+-- name: UpdateScore :one
+update scores
+set
+    accuracy = $2,
+    max_combo = $3,
+    dx_score = $4,
+    tap_critical = $5,
+    tap_perfect = $6,
+    tap_great = $7,
+    tap_good = $8,
+    tap_miss = $9,
+    hold_critical = $10,
+    hold_perfect = $11,
+    hold_great = $12,
+    hold_good = $13,
+    hold_miss = $14,
+    slide_critical = $15,
+    slide_perfect = $16,
+    slide_great = $17,
+    slide_good = $18,
+    slide_miss = $19,
+    touch_critical = $20,
+    touch_perfect = $21,
+    touch_great = $22,
+    touch_good = $23,
+    touch_miss = $24,
+    break_critical = $25,
+    break_perfect = $26,
+    break_great = $27,
+    break_good = $28,
+    break_miss = $29,
+    fast = $30,
+    late = $31,
+    played_at = $32
+where score_id = $1
+returning *;
+
+-- name: DeleteScore :one
+delete from scores
+where score_id = $1
+returning *;
