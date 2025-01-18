@@ -10,11 +10,11 @@ import (
 )
 
 type userData struct {
-	GameName        string    `json:"gameName"`
-	TagLine         string    `json:"tagLine"`
-	Rating          int32     `json:"rating"`
-	SeasonPlayCount int32     `json:"seasonPlayCount"`
-	TotalPlayCount  int32     `json:"totalPlayCount"`
+	GameName        string `json:"gameName"`
+	TagLine         string `json:"tagLine"`
+	Rating          int32  `json:"rating"`
+	SeasonPlayCount int32  `json:"seasonPlayCount"`
+	TotalPlayCount  int32  `json:"totalPlayCount"`
 }
 
 func scrapeUserData(m *MaimaiClient) (userData, error) {

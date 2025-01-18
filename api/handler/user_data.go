@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"encoding/json"
@@ -19,17 +19,6 @@ type UserData struct {
 	SeasonPlayCount int32            `json:"seasonPlayCount"`
 	TotalPlayCount  int32            `json:"totalPlayCount"`
 	CreatedAt       pgtype.Timestamp `json:"createdAt"`
-}
-
-func ConvertUserData(dbUserData database.UserDatum) UserData {
-	return UserData{
-		ID:              dbUserData.ID,
-		UserID:          dbUserData.UserID,
-		Rating:          dbUserData.Rating,
-		SeasonPlayCount: dbUserData.SeasonPlayCount,
-		TotalPlayCount:  dbUserData.TotalPlayCount,
-		CreatedAt:       dbUserData.CreatedAt,
-	}
 }
 
 func (h *Handler) InsertUserData(w http.ResponseWriter, r *http.Request) {
@@ -76,4 +65,15 @@ func (h *Handler) GetUserDataByMaiID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	api.RespondWithJSON(w, 200, ConvertUserData(userData))
+}
+
+func ConvertUserData(dbUserData database.UserDatum) UserData {
+	return UserData{
+		ID:              dbUserData.ID,
+		UserID:          dbUserData.UserID,
+		Rating:          dbUserData.Rating,
+		SeasonPlayCount: dbUserData.SeasonPlayCount,
+		TotalPlayCount:  dbUserData.TotalPlayCount,
+		CreatedAt:       dbUserData.CreatedAt,
+	}
 }

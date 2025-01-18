@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
-	"github.com/asashakira/mai.gg/api/handlers"
+	"github.com/asashakira/mai.gg/api/handler"
 	"github.com/asashakira/mai.gg/internal/database"
 	"github.com/asashakira/mai.gg/scraper"
 	"github.com/go-chi/chi/v5"
@@ -18,8 +20,8 @@ import (
 func main() {
 	godotenv.Load(".env")
 
-	portString := os.Getenv("PORT")
-	if portString == "" {
+	port := os.Getenv("PORT")
+	if port == "" {
 		log.Fatal("PORT is not found in the environment")
 	}
 
@@ -28,15 +30,34 @@ func main() {
 		log.Fatal("DB_URL is not found in the environment")
 	}
 
-	conn, err := pgx.Connect(context.Background(), dbURL)
-	if err != nil {
-		log.Fatal("Can't connect to database: ", err)
-		panic(err)
+	var conn *pgx.Conn
+	var err error
+	maxRetries := 5
+	retryDelay := 2 * time.Second
+
+	for attempts := 1; attempts <= maxRetries; attempts++ {
+		conn, err = pgx.Connect(context.Background(), dbURL)
+		if err == nil {
+			// Successfully connected
+			fmt.Println("Successfully connected to the database!")
+			break
+		}
+
+		// If connection fails, log the error and retry after a delay
+		log.Printf("Attempt %d/%d: Can't connect to database, retrying in %s...\n", attempts, maxRetries, retryDelay)
+		time.Sleep(retryDelay)
 	}
+
+	// If the connection is still unsuccessful after retries, exit
+	if err != nil {
+		log.Fatalf("Failed to connect to database after %d attempts: %v\n", maxRetries, err)
+	}
+
+	// Make sure to close the connection when done
 	defer conn.Close(context.Background())
 
 	db := database.New(conn)
-	h := handlers.New(conn)
+	h := handler.New(conn)
 
 	go scraper.StartScraping(db)
 
@@ -52,46 +73,56 @@ func main() {
 	}))
 
 	v1Router := chi.NewRouter()
-	v1Router.Get("/healthz", handlers.HealthCheck)
-	v1Router.Get("/err", handlers.ErrorCheck)
+	v1Router.Get("/healthz", handler.HealthCheck)
+	v1Router.Get("/err", handler.ErrorCheck)
 
 	// user routes
 	v1Router.Get("/users", h.GetAllUsers)
 	v1Router.Get("/users/by-id/{id}", h.GetUserByID)
 	v1Router.Get("/users/by-mai-id/{gameName}/{tagLine}", h.GetUserByMaiID)
+	v1Router.Get("/users/by-sega-id/{segaid}/{password}", h.GetUserBySegaID)
 	v1Router.Post("/users", h.CreateUser)
 	v1Router.Patch("/users", h.UpdateUser)
 
 	// user data routes
 	// v1Router.Get("/users/by-uuid/{uuid}/data", h.GetUserDataByUUID)
 	v1Router.Get("/users/by-mai-id/{gameName}/{tagLine}/data", h.GetUserDataByMaiID)
+	// v1Router.Post("/users/data", h.CreateUserData)
 
-	// scores
-	// v1Router.Get("/users/by-mai-id/{gameName}/{tagLine}/scores", h.GetScoresByMaiID)
-	// v1Router.Post("/scores", h.CreateRecord)
-	// v1Router.Put("/records", apiHandler.UpdateRecord)
-	
+	// user scrape metadata
+	v1Router.Get("/users/by-id/{id}/metadata", h.GetUserScrapeMetadataByUserID)
+	v1Router.Patch("/users/metadata", h.UpdateUserScrapeMetadata)
+
 	// songs
 	v1Router.Get("/songs", h.GetAllSongs)
 	v1Router.Get("/songs/by-id/{id}", h.GetSongBySongID)
 	v1Router.Get("/songs/by-altkey/{altkey}", h.GetSongByAltKey)
+	v1Router.Get("/songs/by-title/{title}", h.GetSongsByTitle)
 	v1Router.Post("/songs", h.CreateSong)
 	v1Router.Patch("/songs", h.UpdateSong)
 
 	// beatmaps
 	v1Router.Get("/beatmaps", h.GetAllBeatmaps)
+	// v1Router.Get("/beatmaps/by-id", h.GetAllBeatmaps)
+	v1Router.Get("/beatmaps/by-song-id/{songID}", h.GetBeatmapsBySongID)
 	v1Router.Post("/beatmaps", h.CreateBeatmap)
+	v1Router.Patch("/beatmaps", h.UpdateBeatmap)
+
+	// scores
+	v1Router.Get("/scores", h.GetAllScores)
+	// v1Router.Get("/users/by-mai-id/{gameName}/{tagLine}/scores", h.GetScoresByMaiID)
+	v1Router.Get("/users/by-id/{id}/scores", h.GetScoresByUserID)
+	v1Router.Get("/scores/by-id/{id}", h.GetScoreByScoreID)
+	v1Router.Post("/scores", h.CreateScore)
+	// v1Router.Patch("/records", apiHandler.UpdateRecord)
 
 	router.Mount("/v1", v1Router)
 
 	server := &http.Server{
 		Handler: router,
-		Addr:    ":" + portString,
+		Addr:    ":" + port,
 	}
 
-	log.Printf("Server starting on port %v", portString)
-	err = server.ListenAndServe()
-	if err != nil {
-		log.Fatal(err)
-	}
+	log.Printf("Server starting on port %v", port)
+	log.Fatal(server.ListenAndServe())
 }

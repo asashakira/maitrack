@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"encoding/json"
@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/asashakira/mai.gg/api"
 	"github.com/asashakira/mai.gg/internal/database"
@@ -54,7 +55,21 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		api.RespondWithError(w, 400, errorMessage)
 		return
 	}
-	log.Println("CreateUser:", ConvertUser(user))
+
+	// create scrape metadata
+	defaultLastPlayedAtTime, _ := time.Parse("2006-01-02 15:04", "2006-01-02 15:04")
+	_, err = h.queries.CreateUserScrapeMetadata(r.Context(), database.CreateUserScrapeMetadataParams{
+		UserID:       user.UserID,
+		LastPlayedAt: pgtype.Timestamp{Time: defaultLastPlayedAtTime, Valid: true},
+	})
+	if err != nil {
+		errorMessage := fmt.Sprintf("CreateUserScrapeMetadata %v", err)
+		log.Println(errorMessage)
+		api.RespondWithError(w, 400, errorMessage)
+		return
+	}
+
+	// log.Println("CreateUser:", ConvertUser(user))
 	api.RespondWithJSON(w, 200, ConvertUser(user))
 }
 
@@ -67,7 +82,7 @@ func (h *Handler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 		api.RespondWithError(w, 400, errorMessage)
 		return
 	}
-	log.Println("GetUserByID:", ConvertUser(user))
+	// log.Println("GetUserByID:", ConvertUser(user))
 	api.RespondWithJSON(w, 200, ConvertUser(user))
 }
 
@@ -102,7 +117,42 @@ func (h *Handler) GetUserByMaiID(w http.ResponseWriter, r *http.Request) {
 		api.RespondWithError(w, 400, errorMessage)
 		return
 	}
-	log.Println("GetUserByID:", ConvertUser(user))
+	// log.Println("GetUserByID:", ConvertUser(user))
+	api.RespondWithJSON(w, 200, ConvertUser(user))
+}
+
+func (h *Handler) GetUserBySegaID(w http.ResponseWriter, r *http.Request) {
+	segaid := chi.URLParam(r, "segaid")
+	segaid, err := url.QueryUnescape(segaid)
+	if err != nil {
+		api.RespondWithError(w, 400, fmt.Sprintf("error decoding segaid from url: %v", err))
+		return
+	}
+	password := chi.URLParam(r, "password")
+	password, err = url.QueryUnescape(password)
+	if err != nil {
+		api.RespondWithError(w, 400, fmt.Sprintf("error decoding password from url: %v", err))
+		return
+	}
+
+	user, err := h.queries.GetUserBySegaID(r.Context(), database.GetUserBySegaIDParams{
+		SegaID:   segaid,
+		Password: password,
+	})
+	if err != nil {
+		// Handle "no rows found"
+		if errors.Is(err, pgx.ErrNoRows) {
+			errorMessage := fmt.Sprintf("No user found with provided fields: %s", err)
+			log.Println(errorMessage)
+			api.RespondWithError(w, 404, errorMessage)
+			return
+		}
+		errorMessage := fmt.Sprintf("GetUserBySegaID %v", err)
+		log.Println(errorMessage)
+		api.RespondWithError(w, 400, errorMessage)
+		return
+	}
+	// log.Println("GetUserByID:", ConvertUser(user))
 	api.RespondWithJSON(w, 200, ConvertUser(user))
 }
 
@@ -114,7 +164,7 @@ func (h *Handler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 		api.RespondWithError(w, 400, errorMessage)
 		return
 	}
-	log.Println("GetAllUsers: user count -", len(users))
+	// log.Println("GetAllUsers: user count -", len(users))
 	api.RespondWithJSON(w, 200, ConvertUsers(users))
 }
 
@@ -158,8 +208,8 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// log and reqpond updated user
-	log.Println("UpdateUser:", ConvertUser(updatedUser))
+	// log and respond updated user
+	// log.Println("UpdateUser:", ConvertUser(updatedUser))
 	api.RespondWithJSON(w, 200, ConvertUser(updatedUser))
 }
 

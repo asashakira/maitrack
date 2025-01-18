@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 func ifNotEmpty(s string, fallback string) string {
 	if s == "" {

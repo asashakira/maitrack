@@ -166,11 +166,16 @@ select
     updated_at,
     created_at
 from users
-where sega_id = $1
+where sega_id = $1 and password = $2
 `
 
-func (q *Queries) GetUserBySegaID(ctx context.Context, segaID string) (User, error) {
-	row := q.db.QueryRow(ctx, getUserBySegaID, segaID)
+type GetUserBySegaIDParams struct {
+	SegaID   string
+	Password string
+}
+
+func (q *Queries) GetUserBySegaID(ctx context.Context, arg GetUserBySegaIDParams) (User, error) {
+	row := q.db.QueryRow(ctx, getUserBySegaID, arg.SegaID, arg.Password)
 	var i User
 	err := row.Scan(
 		&i.UserID,
@@ -187,30 +192,30 @@ func (q *Queries) GetUserBySegaID(ctx context.Context, segaID string) (User, err
 const updateUser = `-- name: UpdateUser :one
 update users
 set
-    sega_id = $1,
-    password = $2,
-    game_name = $3,
-    tag_line = $4,
+    sega_id = $2,
+    password = $3,
+    game_name = $4,
+    tag_line = $5,
     updated_at = now()
-where user_id = $5
+where user_id = $1
 returning user_id, sega_id, password, game_name, tag_line, updated_at, created_at
 `
 
 type UpdateUserParams struct {
+	UserID   uuid.UUID
 	SegaID   string
 	Password string
 	GameName string
 	TagLine  string
-	UserID   uuid.UUID
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, updateUser,
+		arg.UserID,
 		arg.SegaID,
 		arg.Password,
 		arg.GameName,
 		arg.TagLine,
-		arg.UserID,
 	)
 	var i User
 	err := row.Scan(

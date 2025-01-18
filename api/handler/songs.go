@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"encoding/json"
@@ -97,7 +97,7 @@ func (h *Handler) CreateSong(w http.ResponseWriter, r *http.Request) {
 		api.RespondWithError(w, 400, errorMessage)
 		return
 	}
-	log.Println("CreateSong:", ConvertSong(song))
+	// log.Println("CreateSong:", ConvertSong(song))
 	api.RespondWithJSON(w, 200, ConvertSong(song))
 }
 
@@ -109,7 +109,7 @@ func (h *Handler) GetAllSongs(w http.ResponseWriter, r *http.Request) {
 		api.RespondWithError(w, 400, errorMessage)
 		return
 	}
-	log.Println("GetAllSongs:", ConvertSongs(songs))
+	// log.Println("GetAllSongs:", ConvertSongs(songs))
 	api.RespondWithJSON(w, 200, ConvertSongs(songs))
 }
 
@@ -124,7 +124,7 @@ func (h *Handler) GetSongBySongID(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// Handle "no rows found"
 		if errors.Is(err, pgx.ErrNoRows) {
-			errorMessage := fmt.Sprintf("No song found with provided songId: %s", err)
+			errorMessage := fmt.Sprintf("No song found with provided songID: %s", err)
 			log.Println(errorMessage)
 			api.RespondWithError(w, 404, errorMessage)
 			return
@@ -135,7 +135,7 @@ func (h *Handler) GetSongBySongID(w http.ResponseWriter, r *http.Request) {
 		api.RespondWithError(w, 400, errorMessage)
 		return
 	}
-	log.Println("GetSongBySongID:", ConvertSong(song))
+	// log.Println("GetSongBySongID:", ConvertSong(song))
 	api.RespondWithJSON(w, 200, ConvertSong(song))
 }
 
@@ -167,20 +167,48 @@ func (h *Handler) GetSongByAltKey(w http.ResponseWriter, r *http.Request) {
 		api.RespondWithError(w, 400, errorMessage)
 		return
 	}
-	log.Println("GetSongByAltKey:", ConvertSong(song))
+	// log.Println("GetSongByAltKey:", ConvertSong(song))
 	api.RespondWithJSON(w, 200, ConvertSong(song))
+}
+
+// may return multiple songs
+func (h *Handler) GetSongsByTitle(w http.ResponseWriter, r *http.Request) {
+	title := chi.URLParam(r, "title")
+	title, err := url.QueryUnescape(title)
+	if err != nil {
+		api.RespondWithError(w, 400, fmt.Sprintf("error decoding title from url: %v", err))
+		return
+	}
+
+	songs, err := h.queries.GetSongsByTitle(r.Context(), title)
+	if err != nil {
+		// Handle "no rows found"
+		if errors.Is(err, pgx.ErrNoRows) {
+			errorMessage := fmt.Sprintf("No song found with provided title '%s': %s", title, err)
+			log.Println(errorMessage)
+			api.RespondWithError(w, 404, errorMessage)
+			return
+		}
+		// Handle other errors
+		errorMessage := fmt.Sprintf("GetSongByTitle %v", err)
+		log.Println(errorMessage)
+		api.RespondWithError(w, 400, errorMessage)
+		return
+	}
+	// log.Println("GetSongByTitle:", ConvertSongs(songs))
+	api.RespondWithJSON(w, 200, ConvertSongs(songs))
 }
 
 func (h *Handler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		SongID      uuid.UUID `json:"songID"`
-		AltKey      string    `json:"altkey,omitempty"`
-		Title       string    `json:"title,omitempty"`
-		Artist      string    `json:"artist,omitempty"`
-		Genre       string    `json:"genre,omitempty"`
-		Bpm         string    `json:"bpm,omitempty"`
-		ImageUrl    string    `json:"imageUrl,omitempty"`
-		Version     string    `json:"version,omitempty"`
+		AltKey      *string    `json:"altkey,omitempty"`
+		Title       *string    `json:"title,omitempty"`
+		Artist      *string    `json:"artist,omitempty"`
+		Genre       *string    `json:"genre,omitempty"`
+		Bpm         *string    `json:"bpm,omitempty"`
+		ImageUrl    *string    `json:"imageUrl,omitempty"`
+		Version     *string    `json:"version,omitempty"`
 		IsUtage     *bool     `json:"isUtage,omitempty"`
 		IsAvailable *bool     `json:"isAvailable,omitempty"`
 		ReleaseDate string    `json:"releaseDate,omitempty"`
@@ -228,13 +256,13 @@ func (h *Handler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 	// Update only the fields provided in the request
 	updatedSong, err := h.queries.UpdateSong(r.Context(), database.UpdateSongParams{
 		SongID:      song.SongID,
-		AltKey:      ifNotEmpty(params.AltKey, song.AltKey),
-		Title:       ifNotEmpty(params.Title, song.Title),
-		Artist:      ifNotEmpty(params.Artist, song.Artist),
-		Genre:       ifNotEmpty(params.Genre, song.Genre),
-		Bpm:         ifNotEmpty(params.Bpm, song.Bpm),
-		ImageUrl:    ifNotEmpty(params.ImageUrl, song.ImageUrl),
-		Version:     ifNotEmpty(params.Version, song.Version),
+		AltKey:      ifNotNil(params.AltKey, song.AltKey),
+		Title:       ifNotNil(params.Title, song.Title),
+		Artist:      ifNotNil(params.Artist, song.Artist),
+		Genre:       ifNotNil(params.Genre, song.Genre),
+		Bpm:         ifNotNil(params.Bpm, song.Bpm),
+		ImageUrl:    ifNotNil(params.ImageUrl, song.ImageUrl),
+		Version:     ifNotNil(params.Version, song.Version),
 		IsUtage:     ifNotNil(params.IsUtage, song.IsUtage),
 		IsAvailable: ifNotNil(params.IsAvailable, song.IsAvailable),
 		ReleaseDate: releaseDate,
@@ -248,7 +276,7 @@ func (h *Handler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// log and reqpond updated user
-	log.Println("UpdateSong:", ConvertSong(updatedSong))
+	// log.Println("UpdateSong:", ConvertSong(updatedSong))
 	api.RespondWithJSON(w, 200, ConvertSong(updatedSong))
 }
 

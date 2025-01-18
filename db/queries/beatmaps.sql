@@ -81,7 +81,7 @@ select
 from beatmaps
 where beatmap_id = $1;
 
--- name: GetBeatmapBySongID :one
+-- name: GetBeatmapsBySongID :many
 select
     beatmap_id,
     song_id,
@@ -102,3 +102,41 @@ select
     created_at
 from beatmaps
 where song_id = $1;
+
+-- name: UpdateBeatmap :one
+update beatmaps
+set
+    song_id = $2,
+    difficulty = $3,
+    level = $4,
+    internal_level = $5,
+    type = $6,
+    total_notes = $7,
+    tap = $8,
+    hold = $9,
+    slide = $10,
+    touch = $11,
+    break = $12,
+    note_designer = $13,
+    max_dx_score = $14,
+    is_valid = $15,
+    updated_at = now()
+where beatmap_id = $1
+returning
+    beatmap_id,
+    song_id,
+    difficulty,
+    level,
+    internal_level,
+    type,
+    total_notes,
+    tap,
+    hold,
+    slide,
+    touch,
+    break,
+    note_designer,
+    max_dx_score,
+    is_valid,
+    updated_at,
+    created_at;

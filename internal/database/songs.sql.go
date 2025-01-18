@@ -235,6 +235,61 @@ func (q *Queries) GetSongBySongID(ctx context.Context, songID uuid.UUID) (Song, 
 	return i, err
 }
 
+const getSongsByTitle = `-- name: GetSongsByTitle :many
+select
+    song_id,
+    alt_key,
+    title,
+    artist,
+    genre,
+    bpm,
+    image_url,
+    version,
+    is_utage,
+    is_available,
+    release_date,
+    delete_date,
+    updated_at,
+    created_at
+from songs
+where title = $1
+`
+
+func (q *Queries) GetSongsByTitle(ctx context.Context, title string) ([]Song, error) {
+	rows, err := q.db.Query(ctx, getSongsByTitle, title)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Song
+	for rows.Next() {
+		var i Song
+		if err := rows.Scan(
+			&i.SongID,
+			&i.AltKey,
+			&i.Title,
+			&i.Artist,
+			&i.Genre,
+			&i.Bpm,
+			&i.ImageUrl,
+			&i.Version,
+			&i.IsUtage,
+			&i.IsAvailable,
+			&i.ReleaseDate,
+			&i.DeleteDate,
+			&i.UpdatedAt,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateSong = `-- name: UpdateSong :one
 update songs
 set

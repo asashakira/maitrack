@@ -66,7 +66,7 @@ type CreateBeatmapParams struct {
 	Slide         int32
 	Touch         int32
 	Break         int32
-	NoteDesigner  string
+	NoteDesigner  pgtype.Text
 	MaxDxScore    int32
 	IsValid       bool
 }
@@ -220,7 +220,7 @@ func (q *Queries) GetBeatmapByBeatmapID(ctx context.Context, beatmapID uuid.UUID
 	return i, err
 }
 
-const getBeatmapBySongID = `-- name: GetBeatmapBySongID :one
+const getBeatmapsBySongID = `-- name: GetBeatmapsBySongID :many
 select
     beatmap_id,
     song_id,
@@ -243,8 +243,119 @@ from beatmaps
 where song_id = $1
 `
 
-func (q *Queries) GetBeatmapBySongID(ctx context.Context, songID uuid.UUID) (Beatmap, error) {
-	row := q.db.QueryRow(ctx, getBeatmapBySongID, songID)
+func (q *Queries) GetBeatmapsBySongID(ctx context.Context, songID uuid.UUID) ([]Beatmap, error) {
+	rows, err := q.db.Query(ctx, getBeatmapsBySongID, songID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Beatmap
+	for rows.Next() {
+		var i Beatmap
+		if err := rows.Scan(
+			&i.BeatmapID,
+			&i.SongID,
+			&i.Difficulty,
+			&i.Level,
+			&i.InternalLevel,
+			&i.Type,
+			&i.TotalNotes,
+			&i.Tap,
+			&i.Hold,
+			&i.Slide,
+			&i.Touch,
+			&i.Break,
+			&i.NoteDesigner,
+			&i.MaxDxScore,
+			&i.IsValid,
+			&i.UpdatedAt,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateBeatmap = `-- name: UpdateBeatmap :one
+update beatmaps
+set
+    song_id = $2,
+    difficulty = $3,
+    level = $4,
+    internal_level = $5,
+    type = $6,
+    total_notes = $7,
+    tap = $8,
+    hold = $9,
+    slide = $10,
+    touch = $11,
+    break = $12,
+    note_designer = $13,
+    max_dx_score = $14,
+    is_valid = $15,
+    updated_at = now()
+where beatmap_id = $1
+returning
+    beatmap_id,
+    song_id,
+    difficulty,
+    level,
+    internal_level,
+    type,
+    total_notes,
+    tap,
+    hold,
+    slide,
+    touch,
+    break,
+    note_designer,
+    max_dx_score,
+    is_valid,
+    updated_at,
+    created_at
+`
+
+type UpdateBeatmapParams struct {
+	BeatmapID     uuid.UUID
+	SongID        uuid.UUID
+	Difficulty    string
+	Level         string
+	InternalLevel pgtype.Numeric
+	Type          string
+	TotalNotes    int32
+	Tap           int32
+	Hold          int32
+	Slide         int32
+	Touch         int32
+	Break         int32
+	NoteDesigner  pgtype.Text
+	MaxDxScore    int32
+	IsValid       bool
+}
+
+func (q *Queries) UpdateBeatmap(ctx context.Context, arg UpdateBeatmapParams) (Beatmap, error) {
+	row := q.db.QueryRow(ctx, updateBeatmap,
+		arg.BeatmapID,
+		arg.SongID,
+		arg.Difficulty,
+		arg.Level,
+		arg.InternalLevel,
+		arg.Type,
+		arg.TotalNotes,
+		arg.Tap,
+		arg.Hold,
+		arg.Slide,
+		arg.Touch,
+		arg.Break,
+		arg.NoteDesigner,
+		arg.MaxDxScore,
+		arg.IsValid,
+	)
 	var i Beatmap
 	err := row.Scan(
 		&i.BeatmapID,

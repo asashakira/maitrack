@@ -22,7 +22,7 @@ type Beatmap struct {
 	Slide         int32
 	Touch         int32
 	Break         int32
-	NoteDesigner  string
+	NoteDesigner  pgtype.Text
 	MaxDxScore    int32
 	IsValid       bool
 	UpdatedAt     pgtype.Timestamp
@@ -30,15 +30,42 @@ type Beatmap struct {
 }
 
 type Score struct {
-	ScoreID   uuid.UUID
-	BeatmapID uuid.UUID
-	SongID    uuid.UUID
-	UserID    uuid.UUID
-	Accuracy  string
-	MaxCombo  int32
-	DxScore   int32
-	PlayedAt  pgtype.Timestamp
-	CreatedAt pgtype.Timestamp
+	ScoreID       uuid.UUID
+	BeatmapID     uuid.UUID
+	SongID        uuid.UUID
+	UserID        uuid.UUID
+	Accuracy      string
+	MaxCombo      int32
+	DxScore       int32
+	TapCritical   int32
+	TapPerfect    int32
+	TapGreat      int32
+	TapGood       int32
+	TapMiss       int32
+	HoldCritical  int32
+	HoldPerfect   int32
+	HoldGreat     int32
+	HoldGood      int32
+	HoldMiss      int32
+	SlideCritical int32
+	SlidePerfect  int32
+	SlideGreat    int32
+	SlideGood     int32
+	SlideMiss     int32
+	TouchCritical int32
+	TouchPerfect  int32
+	TouchGreat    int32
+	TouchGood     int32
+	TouchMiss     int32
+	BreakCritical int32
+	BreakPerfect  int32
+	BreakGreat    int32
+	BreakGood     int32
+	BreakMiss     int32
+	Fast          int32
+	Late          int32
+	PlayedAt      pgtype.Timestamp
+	CreatedAt     pgtype.Timestamp
 }
 
 type Song struct {
@@ -77,4 +104,11 @@ type UserDatum struct {
 	SeasonPlayCount int32
 	TotalPlayCount  int32
 	CreatedAt       pgtype.Timestamp
+}
+
+type UserScrapeMetadatum struct {
+	UserID       uuid.UUID
+	LastPlayedAt pgtype.Timestamp
+	UpdatedAt    pgtype.Timestamp
+	CreatedAt    pgtype.Timestamp
 }

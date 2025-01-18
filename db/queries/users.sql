@@ -33,7 +33,7 @@ select
     updated_at,
     created_at
 from users
-where sega_id = $1;
+where sega_id = $1 and password = $2;
 
 -- name: GetUserByMaiID :one
 select
@@ -62,10 +62,10 @@ order by updated_at desc;
 -- name: UpdateUser :one
 update users
 set
-    sega_id = $1,
-    password = $2,
-    game_name = $3,
-    tag_line = $4,
+    sega_id = $2,
+    password = $3,
+    game_name = $4,
+    tag_line = $5,
     updated_at = now()
-where user_id = $5
+where user_id = $1
 returning user_id, sega_id, password, game_name, tag_line, updated_at, created_at;
