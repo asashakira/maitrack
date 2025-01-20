@@ -1,18 +1,16 @@
 package handler
 
 import (
-	"github.com/asashakira/mai.gg-api/internal/database"
+	"github.com/asashakira/mai.gg-api/internal/database/sqlc"
 	"github.com/jackc/pgx/v5"
 )
 
 type Handler struct {
-	queries *database.Queries
+	queries *sqlc.Queries
 }
 
 func New(conn *pgx.Conn) *Handler {
 	return &Handler{
-		queries: database.New(conn),
+		queries: sqlc.New(conn),
 	}
 }
-
-

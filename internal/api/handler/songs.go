@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/asashakira/mai.gg-api/internal/database"
+	database "github.com/asashakira/mai.gg-api/internal/database/sqlc"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"

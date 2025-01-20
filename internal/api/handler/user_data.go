@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/asashakira/mai.gg-api/internal/database"
+	database "github.com/asashakira/mai.gg-api/internal/database/sqlc"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -39,7 +39,7 @@ func (h *Handler) InsertUserData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.queries.InsertUserData(r.Context(), database.InsertUserDataParams{
+	err = h.queries.CreateUserData(r.Context(), database.CreateUserDataParams{
 		ID:              uuid.New(),
 		UserID:          params.UserID,
 		GameName:        params.GameName,

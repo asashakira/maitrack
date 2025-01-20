@@ -3,13 +3,50 @@
 //   sqlc v1.27.0
 // source: user_data.sql
 
-package database
+package sqlc
 
 import (
 	"context"
 
 	"github.com/google/uuid"
 )
+
+const createUserData = `-- name: CreateUserData :exec
+insert into user_data (
+    id,
+    user_id,
+    game_name,
+    tag_line,
+    rating,
+    season_play_count,
+    total_play_count,
+    created_at
+)
+values ($1, $2, $3, $4, $5, $6, $7, now())
+`
+
+type CreateUserDataParams struct {
+	ID              uuid.UUID
+	UserID          uuid.UUID
+	GameName        string
+	TagLine         string
+	Rating          int32
+	SeasonPlayCount int32
+	TotalPlayCount  int32
+}
+
+func (q *Queries) CreateUserData(ctx context.Context, arg CreateUserDataParams) error {
+	_, err := q.db.Exec(ctx, createUserData,
+		arg.ID,
+		arg.UserID,
+		arg.GameName,
+		arg.TagLine,
+		arg.Rating,
+		arg.SeasonPlayCount,
+		arg.TotalPlayCount,
+	)
+	return err
+}
 
 const getUserDataByMaiID = `-- name: GetUserDataByMaiID :one
 select
@@ -78,41 +115,4 @@ func (q *Queries) GetUserDataByUserID(ctx context.Context, userID uuid.UUID) (Us
 		&i.CreatedAt,
 	)
 	return i, err
-}
-
-const insertUserData = `-- name: InsertUserData :exec
-insert into user_data (
-    id,
-    user_id,
-    game_name,
-    tag_line,
-    rating,
-    season_play_count,
-    total_play_count,
-    created_at
-)
-values ($1, $2, $3, $4, $5, $6, $7, now())
-`
-
-type InsertUserDataParams struct {
-	ID              uuid.UUID
-	UserID          uuid.UUID
-	GameName        string
-	TagLine         string
-	Rating          int32
-	SeasonPlayCount int32
-	TotalPlayCount  int32
-}
-
-func (q *Queries) InsertUserData(ctx context.Context, arg InsertUserDataParams) error {
-	_, err := q.db.Exec(ctx, insertUserData,
-		arg.ID,
-		arg.UserID,
-		arg.GameName,
-		arg.TagLine,
-		arg.Rating,
-		arg.SeasonPlayCount,
-		arg.TotalPlayCount,
-	)
-	return err
 }

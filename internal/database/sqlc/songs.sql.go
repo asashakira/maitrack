@@ -3,7 +3,7 @@
 //   sqlc v1.27.0
 // source: songs.sql
 
-package database
+package sqlc
 
 import (
 	"context"

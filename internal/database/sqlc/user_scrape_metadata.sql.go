@@ -3,7 +3,7 @@
 //   sqlc v1.27.0
 // source: user_scrape_metadata.sql
 
-package database
+package sqlc
 
 import (
 	"context"

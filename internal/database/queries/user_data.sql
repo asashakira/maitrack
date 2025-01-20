@@ -1,4 +1,4 @@
--- name: InsertUserData :exec
+-- name: CreateUserData :exec
 insert into user_data (
     id,
     user_id,

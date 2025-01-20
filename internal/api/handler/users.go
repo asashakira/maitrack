@@ -9,11 +9,12 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/asashakira/mai.gg-api/internal/database"
+	database "github.com/asashakira/mai.gg-api/internal/database/sqlc"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
@@ -45,12 +46,28 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Hash passwords
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(params.Password), bcrypt.DefaultCost)
+	if err != nil {
+		errorMessage := fmt.Sprintf("failed to hash password %s", err)
+		log.Println(errorMessage)
+		respondWithError(w, 400, errorMessage)
+		return
+	}
+	hashedSegaPassword, err := bcrypt.GenerateFromPassword([]byte(params.SegaPassword), bcrypt.DefaultCost)
+	if err != nil {
+		errorMessage := fmt.Sprintf("failed to hash sega password %s", err)
+		log.Println(errorMessage)
+		respondWithError(w, 400, errorMessage)
+		return
+	}
+
 	user, err := h.queries.CreateUser(r.Context(), database.CreateUserParams{
 		UserID:       uuid.New(),
 		Username:     params.Username,
-		Password:     params.Password,
+		Password:     string(hashedPassword),
 		SegaID:       params.SegaID,
-		SegaPassword: params.SegaPassword,
+		SegaPassword: string(hashedSegaPassword),
 		GameName:     params.GameName,
 		TagLine:      params.TagLine,
 	})
