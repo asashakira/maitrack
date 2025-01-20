@@ -28,7 +28,7 @@ func SetUpRoutes(r *chi.Mux, h *handler.Handler) {
 	v1Router.Get("/users", h.GetAllUsers)
 	v1Router.Get("/users/by-id/{id}", h.GetUserByID)
 	v1Router.Get("/users/by-mai-id/{gameName}/{tagLine}", h.GetUserByMaiID)
-	v1Router.Get("/users/by-sega-id/{username}", h.GetUserByUsername)
+	v1Router.Get("/users/by-username/{username}", h.GetUserByUsername)
 	v1Router.Patch("/users", h.UpdateUser)
 
 	// user data routes
