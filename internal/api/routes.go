@@ -20,12 +20,15 @@ func SetUpRoutes(r *chi.Mux, h *handler.Handler) {
 	v1Router.Get("/healthz", handler.HealthCheck)
 	v1Router.Get("/err", handler.ErrorCheck)
 
+	// auth
+	v1Router.Post("/register", h.Register)
+	
+
 	// user routes
 	v1Router.Get("/users", h.GetAllUsers)
 	v1Router.Get("/users/by-id/{id}", h.GetUserByID)
 	v1Router.Get("/users/by-mai-id/{gameName}/{tagLine}", h.GetUserByMaiID)
 	v1Router.Get("/users/by-sega-id/{username}", h.GetUserByUsername)
-	v1Router.Post("/users", h.CreateUser)
 	v1Router.Patch("/users", h.UpdateUser)
 
 	// user data routes

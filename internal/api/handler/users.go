@@ -7,14 +7,12 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"time"
 
 	database "github.com/asashakira/mai.gg-api/internal/database/sqlc"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
@@ -27,72 +25,6 @@ type User struct {
 	TagLine      string           `json:"tagLine"`
 	CreatedAt    pgtype.Timestamp `json:"createdAt"`
 	UpdatedAt    pgtype.Timestamp `json:"updatedAt"`
-}
-
-func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		Username     string `json:"username"`
-		Password     string `json:"password"`
-		SegaID       string `json:"segaID"`
-		SegaPassword string `json:"segaPassword"`
-		GameName     string `json:"gameName"`
-		TagLine      string `json:"tagLine"`
-	}
-	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
-	err := decoder.Decode(&params)
-	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("Error parsing JSON: %v", err))
-		return
-	}
-
-	// Hash passwords
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(params.Password), bcrypt.DefaultCost)
-	if err != nil {
-		errorMessage := fmt.Sprintf("failed to hash password %s", err)
-		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
-		return
-	}
-	hashedSegaPassword, err := bcrypt.GenerateFromPassword([]byte(params.SegaPassword), bcrypt.DefaultCost)
-	if err != nil {
-		errorMessage := fmt.Sprintf("failed to hash sega password %s", err)
-		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
-		return
-	}
-
-	user, err := h.queries.CreateUser(r.Context(), database.CreateUserParams{
-		UserID:       uuid.New(),
-		Username:     params.Username,
-		Password:     string(hashedPassword),
-		SegaID:       params.SegaID,
-		SegaPassword: string(hashedSegaPassword),
-		GameName:     params.GameName,
-		TagLine:      params.TagLine,
-	})
-	if err != nil {
-		errorMessage := fmt.Sprintf("CreateUser %v", err)
-		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
-		return
-	}
-
-	// create scrape metadata
-	defaultLastPlayedAtTime, _ := time.Parse("2006-01-02 15:04", "2006-01-02 15:04")
-	_, err = h.queries.CreateUserScrapeMetadata(r.Context(), database.CreateUserScrapeMetadataParams{
-		UserID:       user.UserID,
-		LastPlayedAt: pgtype.Timestamp{Time: defaultLastPlayedAtTime, Valid: true},
-	})
-	if err != nil {
-		errorMessage := fmt.Sprintf("CreateUserScrapeMetadata %v", err)
-		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
-		return
-	}
-
-	// log.Println("CreateUser:", ConvertUser(user))
-	respondWithJSON(w, 200, ConvertUser(user))
 }
 
 func (h *Handler) GetUserByID(w http.ResponseWriter, r *http.Request) {
