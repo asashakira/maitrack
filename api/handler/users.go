@@ -17,21 +17,25 @@ import (
 )
 
 type User struct {
-	UserID    uuid.UUID        `json:"userID"`
-	SegaID    string           `json:"segaID"`
-	Password  string           `json:"password"`
-	GameName  string           `json:"gameName"`
-	TagLine   string           `json:"tagLine"`
-	CreatedAt pgtype.Timestamp `json:"createdAt"`
-	UpdatedAt pgtype.Timestamp `json:"updatedAt"`
+	UserID       uuid.UUID        `json:"userID"`
+	Username     string           `json:"username"`
+	Password     string           `json:"password"`
+	SegaID       string           `json:"segaID"`
+	SegaPassword string           `json:"segaPassword"`
+	GameName     string           `json:"gameName"`
+	TagLine      string           `json:"tagLine"`
+	CreatedAt    pgtype.Timestamp `json:"createdAt"`
+	UpdatedAt    pgtype.Timestamp `json:"updatedAt"`
 }
 
 func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		SegaID   string `json:"segaID"`
-		Password string `json:"password"`
-		GameName string `json:"gameName"`
-		TagLine  string `json:"tagLine"`
+		Username     string `json:"username"`
+		Password     string `json:"password"`
+		SegaID       string `json:"segaID"`
+		SegaPassword string `json:"segaPassword"`
+		GameName     string `json:"gameName"`
+		TagLine      string `json:"tagLine"`
 	}
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
@@ -42,11 +46,13 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := h.queries.CreateUser(r.Context(), database.CreateUserParams{
-		UserID:   uuid.New(),
-		SegaID:   params.SegaID,
-		Password: params.Password,
-		GameName: params.GameName,
-		TagLine:  params.TagLine,
+		UserID:       uuid.New(),
+		Username:     params.Username,
+		Password:     params.Password,
+		SegaID:       params.SegaID,
+		SegaPassword: params.SegaPassword,
+		GameName:     params.GameName,
+		TagLine:      params.TagLine,
 	})
 	if err != nil {
 		errorMessage := fmt.Sprintf("CreateUser %v", err)
@@ -120,33 +126,18 @@ func (h *Handler) GetUserByMaiID(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, 200, ConvertUser(user))
 }
 
-func (h *Handler) GetUserBySegaID(w http.ResponseWriter, r *http.Request) {
-	segaid := chi.URLParam(r, "segaid")
-	segaid, err := url.QueryUnescape(segaid)
-	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("error decoding segaid from url: %v", err))
-		return
-	}
-	password := chi.URLParam(r, "password")
-	password, err = url.QueryUnescape(password)
-	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("error decoding password from url: %v", err))
-		return
-	}
-
-	user, err := h.queries.GetUserBySegaID(r.Context(), database.GetUserBySegaIDParams{
-		SegaID:   segaid,
-		Password: password,
-	})
+func (h *Handler) GetUserByUsername(w http.ResponseWriter, r *http.Request) {
+	username := chi.URLParam(r, "username")
+	user, err := h.queries.GetUserByUsername(r.Context(), username)
 	if err != nil {
 		// Handle "no rows found"
 		if errors.Is(err, pgx.ErrNoRows) {
-			errorMessage := fmt.Sprintf("No user found with provided fields: %s", err)
+			errorMessage := fmt.Sprintf("user with username '%s' not found: %s", username, err)
 			log.Println(errorMessage)
 			respondWithError(w, 404, errorMessage)
 			return
 		}
-		errorMessage := fmt.Sprintf("GetUserBySegaID %v", err)
+		errorMessage := fmt.Sprintf("GetUserByUsername %v", err)
 		log.Println(errorMessage)
 		respondWithError(w, 400, errorMessage)
 		return
@@ -169,11 +160,13 @@ func (h *Handler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		UserID   uuid.UUID `json:"userID,omitempty"`
-		SegaID   string    `json:"segaID,omitempty"`
-		Password string    `json:"password,omitempty"`
-		GameName string    `json:"gameName,omitempty"`
-		TagLine  string    `json:"tagLine,omitempty"`
+		UserID       uuid.UUID `json:"userID,omitempty"`
+		Username     string    `json:"username,omitempty"`
+		Password     string    `json:"password,omitempty"`
+		SegaID       string    `json:"segaID,omitempty"`
+		SegaPassword string    `json:"segaPassword,omitempty"`
+		GameName     string    `json:"gameName,omitempty"`
+		TagLine      string    `json:"tagLine,omitempty"`
 	}
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
@@ -194,11 +187,13 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	// Update only the fields provided in the request
 	updatedUser, err := h.queries.UpdateUser(r.Context(), database.UpdateUserParams{
-		UserID:   user.UserID,
-		SegaID:   ifNotEmpty(params.SegaID, user.SegaID),
-		Password: ifNotEmpty(params.Password, user.Password),
-		GameName: ifNotEmpty(params.GameName, user.GameName),
-		TagLine:  ifNotEmpty(params.TagLine, user.TagLine),
+		UserID:       user.UserID,
+		Username:     ifNotEmpty(params.Username, user.Username),
+		Password:     ifNotEmpty(params.Password, user.Password),
+		SegaID:       ifNotEmpty(params.SegaID, user.SegaID),
+		SegaPassword: ifNotEmpty(params.SegaPassword, user.SegaPassword),
+		GameName:     ifNotEmpty(params.GameName, user.GameName),
+		TagLine:      ifNotEmpty(params.TagLine, user.TagLine),
 	})
 	if err != nil {
 		errorMessage := fmt.Sprintf("UpdateUser %v", err)
@@ -222,12 +217,14 @@ func ConvertUsers(dbUsers []database.User) []User {
 
 func ConvertUser(dbUser database.User) User {
 	return User{
-		UserID:    dbUser.UserID,
-		SegaID:    dbUser.SegaID,
-		Password:  dbUser.Password,
-		GameName:  dbUser.GameName,
-		TagLine:   dbUser.TagLine,
-		CreatedAt: dbUser.CreatedAt,
-		UpdatedAt: dbUser.UpdatedAt,
+		UserID:       dbUser.UserID,
+		Username:     dbUser.Username,
+		Password:     dbUser.Password,
+		SegaID:       dbUser.SegaID,
+		SegaPassword: dbUser.SegaPassword,
+		GameName:     dbUser.GameName,
+		TagLine:      dbUser.TagLine,
+		CreatedAt:    dbUser.CreatedAt,
+		UpdatedAt:    dbUser.UpdatedAt,
 	}
 }
