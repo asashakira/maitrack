@@ -2,14 +2,14 @@ package handler
 
 import (
 	"github.com/asashakira/mai.gg-api/internal/database/sqlc"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Handler struct {
 	queries *sqlc.Queries
 }
 
-func New(conn *pgx.Conn) *Handler {
+func New(conn *pgxpool.Pool) *Handler {
 	return &Handler{
 		queries: sqlc.New(conn),
 	}

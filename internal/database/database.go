@@ -6,17 +6,19 @@ import (
 	"log"
 	"time"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
+	"github.com/pressly/goose/v3"
 )
 
-func Connect(port, dbURL string) (*pgx.Conn, error) {
-	var conn *pgx.Conn
+func Connect(port, dbURL string) (*pgxpool.Pool, error) {
+	var pool *pgxpool.Pool
 	var err error
 	maxRetries := 5
 	retryDelay := 2 * time.Second
 
 	for attempts := 1; attempts <= maxRetries; attempts++ {
-		conn, err = pgx.Connect(context.Background(), dbURL)
+		pool, err = pgxpool.New(context.Background(), dbURL)
 		if err == nil {
 			// Successfully connected
 			fmt.Println("Successfully connected to the database!")
@@ -33,5 +35,22 @@ func Connect(port, dbURL string) (*pgx.Conn, error) {
 		return nil, fmt.Errorf("failed to connect to database after %d attempts: %w", maxRetries, err)
 	}
 
-	return conn, nil
+	if err := runMigrations(pool); err != nil {
+		return nil, fmt.Errorf("migration error: %w", err)
+	}
+
+	return pool, nil
+}
+
+// goose migrations
+func runMigrations(pool *pgxpool.Pool) error {
+	if err := goose.SetDialect("pgx"); err != nil {
+		return err
+	}
+
+	db := stdlib.OpenDBFromPool(pool)
+	if err := goose.Up(db, "./internal/database/migrations"); err != nil {
+		return err
+	}
+	return nil
 }

@@ -23,12 +23,12 @@ func main() {
 	if dbURL == "" {
 		log.Fatal("DB_URL is not found in the environment")
 	}
-	conn, err := database.Connect(port, dbURL)
+	pool, err := database.Connect(port, dbURL)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	h := handler.New(conn)
+	h := handler.New(pool)
 	server := api.New(h)
 	err = server.Run(port)
 	if err != nil {

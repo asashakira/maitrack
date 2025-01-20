@@ -1,12 +1,13 @@
 services:
   # Go server
   server:
+    container_name: maigg-server
     build: .
     ports:
-      - 8080:8080
+      - ${PORT}:8080
     environment:
-      PORT: 8080
-      DB_URL: postgres://postgres:postgres@db:5432/postgres?sslmode=disable
+      PORT: ${PORT}
+      DB_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/postgres?sslmode=disable
     depends_on:
       db:
         condition: service_healthy
@@ -20,21 +21,23 @@ services:
       - 5432:5432
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
       interval: 30s
       retries: 5
       timeout: 10s
-    # volumes:
-    #   - pgdata:/var/lib/postgresql/data
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
+  # Adminer
   adminer:
     image: adminer
+    container_name: adminer
     restart: always
     ports:
       - 8282:8080 # adminer default uses 8080
 
-# volumes:
-#   pgdata:
+volumes:
+  pgdata:

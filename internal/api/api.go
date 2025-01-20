@@ -1,7 +1,7 @@
 package api
 
 import (
-	"log"
+	"fmt"
 	"net/http"
 
 	"github.com/asashakira/mai.gg-api/internal/api/handler"
@@ -26,7 +26,7 @@ func (a *API) Run(port string) error {
 		Addr:    ":" + port,
 	}
 
-	log.Printf("Server starting on port %v", port)
+	fmt.Printf("Server starting on port %v\n", port)
 	if err := server.ListenAndServe(); err != nil {
 		return err
 	}
