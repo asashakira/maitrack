@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -20,38 +19,6 @@ type UserData struct {
 	SeasonPlayCount int32            `json:"seasonPlayCount"`
 	TotalPlayCount  int32            `json:"totalPlayCount"`
 	CreatedAt       pgtype.Timestamp `json:"createdAt"`
-}
-
-func (h *Handler) InsertUserData(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		UserID          uuid.UUID `json:"userID"`
-		GameName        string    `json:"gameName"`
-		TagLine         string    `json:"tagLine"`
-		Rating          int32     `json:"rating"`
-		SeasonPlayCount int32     `json:"seasonPlayCount"`
-		TotalPlayCount  int32     `json:"totalPlayCount"`
-	}
-	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
-	err := decoder.Decode(&params)
-	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("Error parsing JSON: %v", err))
-		return
-	}
-
-	err = h.queries.CreateUserData(r.Context(), database.CreateUserDataParams{
-		ID:              uuid.New(),
-		UserID:          params.UserID,
-		GameName:        params.GameName,
-		TagLine:         params.TagLine,
-		Rating:          params.Rating,
-		SeasonPlayCount: params.SeasonPlayCount,
-		TotalPlayCount:  params.TotalPlayCount,
-	})
-	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("Error Creating UserData: %v", err))
-		return
-	}
 }
 
 func (h *Handler) GetUserDataByMaiID(w http.ResponseWriter, r *http.Request) {

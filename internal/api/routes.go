@@ -22,17 +22,12 @@ func SetUpRoutes(r *chi.Mux, h *handler.Handler) {
 
 	// auth
 	v1Router.Post("/register", h.Register)
-	
 
 	// user routes
-	v1Router.Get("/users", h.GetAllUsers)
-	v1Router.Get("/users/by-id/{id}", h.GetUserByID)
 	v1Router.Get("/users/by-mai-id/{gameName}/{tagLine}", h.GetUserByMaiID)
-	v1Router.Get("/users/by-username/{username}", h.GetUserByUsername)
-	v1Router.Patch("/users", h.UpdateUser)
+	// v1Router.Patch("/users", h.UpdateUser)
 
 	// user data routes
-	// v1Router.Get("/users/by-id/{id}/data", h.GetUserDataByID)
 	v1Router.Get("/users/by-mai-id/{gameName}/{tagLine}/data", h.GetUserDataByMaiID)
 
 	// user scrape metadata
@@ -55,12 +50,10 @@ func SetUpRoutes(r *chi.Mux, h *handler.Handler) {
 	v1Router.Patch("/beatmaps", h.UpdateBeatmap)
 
 	// scores
-	v1Router.Get("/scores", h.GetAllScores)
 	v1Router.Get("/users/by-mai-id/{gameName}/{tagLine}/scores", h.GetScoresByMaiID)
 	v1Router.Get("/users/by-id/{id}/scores", h.GetScoresByUserID)
 	v1Router.Get("/scores/by-id/{id}", h.GetScoreByScoreID)
 	v1Router.Post("/scores", h.CreateScore)
-	// v1Router.Patch("/records", apiHandler.UpdateRecord)
 
 	r.Mount("/v1", v1Router)
 }

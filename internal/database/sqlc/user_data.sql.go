@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const createUserData = `-- name: CreateUserData :exec
+const createUserData = `-- name: CreateUserData :one
 insert into user_data (
     id,
     user_id,
@@ -23,6 +23,15 @@ insert into user_data (
     created_at
 )
 values ($1, $2, $3, $4, $5, $6, $7, now())
+returning
+    id,
+    user_id,
+    game_name,
+    tag_line,
+    rating,
+    season_play_count,
+    total_play_count,
+    created_at
 `
 
 type CreateUserDataParams struct {
@@ -35,8 +44,8 @@ type CreateUserDataParams struct {
 	TotalPlayCount  int32
 }
 
-func (q *Queries) CreateUserData(ctx context.Context, arg CreateUserDataParams) error {
-	_, err := q.db.Exec(ctx, createUserData,
+func (q *Queries) CreateUserData(ctx context.Context, arg CreateUserDataParams) (UserDatum, error) {
+	row := q.db.QueryRow(ctx, createUserData,
 		arg.ID,
 		arg.UserID,
 		arg.GameName,
@@ -45,7 +54,18 @@ func (q *Queries) CreateUserData(ctx context.Context, arg CreateUserDataParams) 
 		arg.SeasonPlayCount,
 		arg.TotalPlayCount,
 	)
-	return err
+	var i UserDatum
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.GameName,
+		&i.TagLine,
+		&i.Rating,
+		&i.SeasonPlayCount,
+		&i.TotalPlayCount,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const getUserDataByMaiID = `-- name: GetUserDataByMaiID :one

@@ -159,25 +159,6 @@ func (h *Handler) CreateScore(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, 200, score)
 }
 
-func (h *Handler) GetAllScores(w http.ResponseWriter, r *http.Request) {
-	scores, err := h.queries.GetAllScores(r.Context())
-	if err != nil {
-		// Handle "no rows found"
-		if errors.Is(err, pgx.ErrNoRows) {
-			errorMessage := fmt.Sprintf("No scores found: %s", err)
-			log.Println(errorMessage)
-			respondWithError(w, 404, errorMessage)
-			return
-		}
-		// Handle other errors
-		errorMessage := fmt.Sprintf("GetAllScores %v", err)
-		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
-		return
-	}
-	respondWithJSON(w, 200, ConvertScores(scores))
-}
-
 func (h *Handler) GetScoreByScoreID(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
