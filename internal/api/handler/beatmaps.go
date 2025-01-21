@@ -7,7 +7,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/asashakira/mai.gg-api/internal/database"
+	database "github.com/asashakira/mai.gg/internal/database/sqlc"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -123,10 +123,10 @@ func (h *Handler) UpdateBeatmap(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		BeatmapID     uuid.UUID       `json:"beatmapID"`
 		SongID        *uuid.UUID      `json:"songID,omitempty"`
-		Difficulty    string          `json:"difficulty,omitempty"`
-		Level         string          `json:"level,omitempty"`
+		Difficulty    *string         `json:"difficulty,omitempty"`
+		Level         *string         `json:"level,omitempty"`
 		InternalLevel *pgtype.Numeric `json:"internalLevel,omitempty"`
-		Type          string          `json:"type,omitempty"`
+		Type          *string         `json:"type,omitempty"`
 		TotalNotes    *int32          `json:"totalNotes,omitempty"`
 		Tap           *int32          `json:"tap,omitempty"`
 		Hold          *int32          `json:"hold,omitempty"`
@@ -165,10 +165,10 @@ func (h *Handler) UpdateBeatmap(w http.ResponseWriter, r *http.Request) {
 	updatedBeatmap, err := h.queries.UpdateBeatmap(r.Context(), database.UpdateBeatmapParams{
 		BeatmapID:     params.BeatmapID,
 		SongID:        ifNotNil(params.SongID, beatmap.SongID),
-		Difficulty:    ifNotEmpty(params.Difficulty, beatmap.Difficulty),
-		Level:         ifNotEmpty(params.Level, beatmap.Level),
+		Difficulty:    ifNotNil(params.Difficulty, beatmap.Difficulty),
+		Level:         ifNotNil(params.Level, beatmap.Level),
 		InternalLevel: ifNotNil(params.InternalLevel, beatmap.InternalLevel),
-		Type:          ifNotEmpty(params.Type, beatmap.Type),
+		Type:          ifNotNil(params.Type, beatmap.Type),
 		TotalNotes:    ifNotNil(params.TotalNotes, beatmap.TotalNotes),
 		Tap:           ifNotNil(params.Tap, beatmap.Tap),
 		Hold:          ifNotNil(params.Hold, beatmap.Hold),

@@ -2,7 +2,7 @@
 // versions:
 //   sqlc v1.27.0
 
-package database
+package sqlc
 
 import (
 	"github.com/google/uuid"
@@ -86,13 +86,15 @@ type Song struct {
 }
 
 type User struct {
-	UserID    uuid.UUID
-	SegaID    string
-	Password  string
-	GameName  string
-	TagLine   string
-	UpdatedAt pgtype.Timestamp
-	CreatedAt pgtype.Timestamp
+	UserID       uuid.UUID
+	Username     string
+	Password     string
+	SegaID       string
+	SegaPassword string
+	GameName     string
+	TagLine      string
+	UpdatedAt    pgtype.Timestamp
+	CreatedAt    pgtype.Timestamp
 }
 
 type UserDatum struct {

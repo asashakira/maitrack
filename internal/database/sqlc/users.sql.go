@@ -3,7 +3,7 @@
 //   sqlc v1.27.0
 // source: users.sql
 
-package database
+package sqlc
 
 import (
 	"context"
@@ -14,38 +14,46 @@ import (
 const createUser = `-- name: CreateUser :one
 insert into users (
     user_id,
-    sega_id,
+    username,
     password,
+    sega_id,
+    sega_password,
     game_name,
     tag_line,
     updated_at,
     created_at
 )
-values ($1, $2, $3, $4, $5, now(), now())
-returning user_id, sega_id, password, game_name, tag_line, updated_at, created_at
+values ($1, $2, $3, $4, $5, $6, $7, now(), now())
+returning user_id, username, password, sega_id, sega_password, game_name, tag_line, updated_at, created_at
 `
 
 type CreateUserParams struct {
-	UserID   uuid.UUID
-	SegaID   string
-	Password string
-	GameName string
-	TagLine  string
+	UserID       uuid.UUID
+	Username     string
+	Password     string
+	SegaID       string
+	SegaPassword string
+	GameName     string
+	TagLine      string
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, createUser,
 		arg.UserID,
-		arg.SegaID,
+		arg.Username,
 		arg.Password,
+		arg.SegaID,
+		arg.SegaPassword,
 		arg.GameName,
 		arg.TagLine,
 	)
 	var i User
 	err := row.Scan(
 		&i.UserID,
-		&i.SegaID,
+		&i.Username,
 		&i.Password,
+		&i.SegaID,
+		&i.SegaPassword,
 		&i.GameName,
 		&i.TagLine,
 		&i.UpdatedAt,
@@ -57,8 +65,10 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 const getAllUsers = `-- name: GetAllUsers :many
 select
     user_id,
-    sega_id,
+    username,
     password,
+    sega_id,
+    sega_password,
     game_name,
     tag_line,
     updated_at,
@@ -78,8 +88,10 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
 		var i User
 		if err := rows.Scan(
 			&i.UserID,
-			&i.SegaID,
+			&i.Username,
 			&i.Password,
+			&i.SegaID,
+			&i.SegaPassword,
 			&i.GameName,
 			&i.TagLine,
 			&i.UpdatedAt,
@@ -98,8 +110,10 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
 const getUserByID = `-- name: GetUserByID :one
 select
     user_id,
-    sega_id,
+    username,
     password,
+    sega_id,
+    sega_password,
     game_name,
     tag_line,
     updated_at,
@@ -113,8 +127,10 @@ func (q *Queries) GetUserByID(ctx context.Context, userID uuid.UUID) (User, erro
 	var i User
 	err := row.Scan(
 		&i.UserID,
-		&i.SegaID,
+		&i.Username,
 		&i.Password,
+		&i.SegaID,
+		&i.SegaPassword,
 		&i.GameName,
 		&i.TagLine,
 		&i.UpdatedAt,
@@ -126,8 +142,10 @@ func (q *Queries) GetUserByID(ctx context.Context, userID uuid.UUID) (User, erro
 const getUserByMaiID = `-- name: GetUserByMaiID :one
 select
     user_id,
-    sega_id,
+    username,
     password,
+    sega_id,
+    sega_password,
     game_name,
     tag_line,
     updated_at,
@@ -146,8 +164,10 @@ func (q *Queries) GetUserByMaiID(ctx context.Context, arg GetUserByMaiIDParams) 
 	var i User
 	err := row.Scan(
 		&i.UserID,
-		&i.SegaID,
+		&i.Username,
 		&i.Password,
+		&i.SegaID,
+		&i.SegaPassword,
 		&i.GameName,
 		&i.TagLine,
 		&i.UpdatedAt,
@@ -156,31 +176,30 @@ func (q *Queries) GetUserByMaiID(ctx context.Context, arg GetUserByMaiIDParams) 
 	return i, err
 }
 
-const getUserBySegaID = `-- name: GetUserBySegaID :one
+const getUserByUsername = `-- name: GetUserByUsername :one
 select
     user_id,
-    sega_id,
+    username,
     password,
+    sega_id,
+    sega_password,
     game_name,
     tag_line,
     updated_at,
     created_at
 from users
-where sega_id = $1 and password = $2
+where username = $1
 `
 
-type GetUserBySegaIDParams struct {
-	SegaID   string
-	Password string
-}
-
-func (q *Queries) GetUserBySegaID(ctx context.Context, arg GetUserBySegaIDParams) (User, error) {
-	row := q.db.QueryRow(ctx, getUserBySegaID, arg.SegaID, arg.Password)
+func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByUsername, username)
 	var i User
 	err := row.Scan(
 		&i.UserID,
-		&i.SegaID,
+		&i.Username,
 		&i.Password,
+		&i.SegaID,
+		&i.SegaPassword,
 		&i.GameName,
 		&i.TagLine,
 		&i.UpdatedAt,
@@ -192,36 +211,44 @@ func (q *Queries) GetUserBySegaID(ctx context.Context, arg GetUserBySegaIDParams
 const updateUser = `-- name: UpdateUser :one
 update users
 set
-    sega_id = $2,
+    username = $2,
     password = $3,
-    game_name = $4,
-    tag_line = $5,
+    sega_id = $4,
+    sega_password = $5,
+    game_name = $6,
+    tag_line = $7,
     updated_at = now()
 where user_id = $1
-returning user_id, sega_id, password, game_name, tag_line, updated_at, created_at
+returning user_id, username, password, sega_id, sega_password, game_name, tag_line, updated_at, created_at
 `
 
 type UpdateUserParams struct {
-	UserID   uuid.UUID
-	SegaID   string
-	Password string
-	GameName string
-	TagLine  string
+	UserID       uuid.UUID
+	Username     string
+	Password     string
+	SegaID       string
+	SegaPassword string
+	GameName     string
+	TagLine      string
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, updateUser,
 		arg.UserID,
-		arg.SegaID,
+		arg.Username,
 		arg.Password,
+		arg.SegaID,
+		arg.SegaPassword,
 		arg.GameName,
 		arg.TagLine,
 	)
 	var i User
 	err := row.Scan(
 		&i.UserID,
-		&i.SegaID,
+		&i.Username,
 		&i.Password,
+		&i.SegaID,
+		&i.SegaPassword,
 		&i.GameName,
 		&i.TagLine,
 		&i.UpdatedAt,
