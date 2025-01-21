@@ -21,7 +21,7 @@ func FetchUserData(user *model.User) error {
 	}
 
 	// Fetch playerData page
-	r, err := m.HTTPClient.Get(maimai.URL + "/playerData")
+	r, err := m.HTTPClient.Get(maimai.BaseURL + "/playerData")
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
 	}
