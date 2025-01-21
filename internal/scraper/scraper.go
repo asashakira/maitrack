@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/asashakira/mai.gg-api/internal/api/model"
-	"github.com/asashakira/mai.gg-api/internal/scraper/maimai"
+	"github.com/asashakira/mai.gg/internal/api/model"
+	"github.com/asashakira/mai.gg/internal/scraper/maimai"
 )
 
 // Fetch rating and playcounts from maimaidxnet

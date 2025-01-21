@@ -4,9 +4,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/asashakira/mai.gg-api/internal/api"
-	"github.com/asashakira/mai.gg-api/internal/api/handler"
-	"github.com/asashakira/mai.gg-api/internal/database"
+	"github.com/asashakira/mai.gg/internal/api"
+	"github.com/asashakira/mai.gg/internal/api/handler"
+	"github.com/asashakira/mai.gg/internal/database"
 	"github.com/joho/godotenv"
 )
 

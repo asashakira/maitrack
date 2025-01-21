@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/asashakira/mai.gg-api/internal/api/handler"
+	"github.com/asashakira/mai.gg/internal/api/handler"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 )

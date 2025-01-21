@@ -6,8 +6,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/asashakira/mai.gg-api/internal/api/model"
-	database "github.com/asashakira/mai.gg-api/internal/database/sqlc"
+	"github.com/asashakira/mai.gg/internal/api/model"
+	database "github.com/asashakira/mai.gg/internal/database/sqlc"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 )

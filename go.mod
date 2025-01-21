@@ -1,4 +1,4 @@
-module github.com/asashakira/mai.gg-api
+module github.com/asashakira/mai.gg
 
 go 1.23.5
 

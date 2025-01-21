@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/asashakira/mai.gg-api/internal/api/model"
-	database "github.com/asashakira/mai.gg-api/internal/database/sqlc"
-	"github.com/asashakira/mai.gg-api/internal/scraper"
+	"github.com/asashakira/mai.gg/internal/api/model"
+	database "github.com/asashakira/mai.gg/internal/database/sqlc"
+	"github.com/asashakira/mai.gg/internal/scraper"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"golang.org/x/crypto/bcrypt"
