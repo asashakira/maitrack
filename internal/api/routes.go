@@ -24,13 +24,8 @@ func SetUpRoutes(r *chi.Mux, h *handler.Handler) {
 	v1Router.Post("/register", h.Register)
 
 	// user routes
-	v1Router.Get("/users/by-mai-id/{gameName}/{tagLine}", h.GetUserByMaiID)
+	v1Router.Get("/users/by-mai-id/{maiID}", h.GetUserByMaiID)
 	// v1Router.Patch("/users", h.UpdateUser)
-
-	// user data routes
-	v1Router.Get("/users/by-mai-id/{gameName}/{tagLine}/data", h.GetUserDataByMaiID)
-
-	// user scrape metadata
 	v1Router.Get("/users/by-id/{id}/metadata", h.GetUserScrapeMetadataByUserID)
 	v1Router.Patch("/users/metadata", h.UpdateUserScrapeMetadata)
 
@@ -44,15 +39,12 @@ func SetUpRoutes(r *chi.Mux, h *handler.Handler) {
 
 	// beatmaps
 	v1Router.Get("/beatmaps", h.GetAllBeatmaps)
-	// v1Router.Get("/beatmaps/by-id", h.GetAllBeatmaps)
 	v1Router.Get("/beatmaps/by-song-id/{songID}", h.GetBeatmapsBySongID)
 	v1Router.Post("/beatmaps", h.CreateBeatmap)
 	v1Router.Patch("/beatmaps", h.UpdateBeatmap)
 
 	// scores
-	v1Router.Get("/users/by-mai-id/{gameName}/{tagLine}/scores", h.GetScoresByMaiID)
-	v1Router.Get("/users/by-id/{id}/scores", h.GetScoresByUserID)
-	v1Router.Get("/scores/by-id/{id}", h.GetScoreByScoreID)
+	v1Router.Get("/users/by-mai-id/{maiID}/scores", h.GetScoresByMaiID)
 	v1Router.Post("/scores", h.CreateScore)
 
 	r.Mount("/v1", v1Router)

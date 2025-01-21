@@ -2,22 +2,27 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 )
-
-func ifNotEmpty(s string, fallback string) string {
-	if s == "" {
-		return fallback
-	}
-	return s
-}
 
 func ifNotNil[T any](v *T, fallback T) T {
 	if v == nil {
 		return fallback
 	}
 	return *v
+}
+
+func DecodeMaiID(maiID string) (gameName, tagLine string, err error) {
+	parts := strings.Split(maiID, "-")
+	if len(parts) < 2 {
+		return "", "", fmt.Errorf("invalid maiID format")
+	}
+	tagLine = parts[len(parts)-1]
+	gameName = strings.Join(parts[:len(parts)-1], "-")
+	return gameName, tagLine, nil
 }
 
 func respondWithError(w http.ResponseWriter, code int, msg string) {

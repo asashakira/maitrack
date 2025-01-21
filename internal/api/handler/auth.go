@@ -33,8 +33,8 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// scrape user data to make sure segaID and segaPassword is valid
-	u := model.User {
-		SegaID: params.SegaID,
+	u := model.User{
+		SegaID:       params.SegaID,
 		SegaPassword: params.SegaPassword,
 	}
 	scrapeErr := scraper.FetchUserData(&u)

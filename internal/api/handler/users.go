@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 
 	"github.com/asashakira/mai.gg-api/internal/api/model"
 	database "github.com/asashakira/mai.gg-api/internal/database/sqlc"
@@ -14,16 +13,14 @@ import (
 )
 
 func (h *Handler) GetUserByMaiID(w http.ResponseWriter, r *http.Request) {
-	gameName := chi.URLParam(r, "gameName")
-	gameName, err := url.QueryUnescape(gameName)
-	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("error decoding gameName from url: %s", err))
-		return
-	}
-	tagLine := chi.URLParam(r, "tagLine")
-	tagLine, err = url.QueryUnescape(tagLine)
-	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("error decoding tagLine from url: %s", err))
+	maiID := chi.URLParam(r, "maiID")
+
+	// get gamename and tagline
+	gameName, tagLine, decodeMaiIDErr := DecodeMaiID(maiID)
+	if decodeMaiIDErr != nil {
+		errorMessage := fmt.Sprintf("error decoding maiID %s", decodeMaiIDErr)
+		log.Println(errorMessage)
+		respondWithError(w, 400, errorMessage)
 		return
 	}
 
@@ -48,8 +45,8 @@ func (h *Handler) GetUserByMaiID(w http.ResponseWriter, r *http.Request) {
 
 	// select * from user_data
 	userData, err := h.queries.GetUserDataByMaiID(r.Context(), database.GetUserDataByMaiIDParams{
-		GameName: chi.URLParam(r, "gameName"),
-		TagLine:  chi.URLParam(r, "tagLine"),
+		GameName: gameName,
+		TagLine:  tagLine,
 	})
 	if err != nil {
 		respondWithError(w, 400, fmt.Sprintf("GetUserDataByMaiID Error: %s", err))

@@ -159,56 +159,6 @@ func (h *Handler) CreateScore(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, 200, score)
 }
 
-func (h *Handler) GetScoreByScoreID(w http.ResponseWriter, r *http.Request) {
-	id, err := uuid.Parse(chi.URLParam(r, "id"))
-	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("error parsing songID: %v", err))
-		return
-	}
-
-	score, err := h.queries.GetScoreByID(r.Context(), id)
-	if err != nil {
-		// Handle "no rows found"
-		if errors.Is(err, pgx.ErrNoRows) {
-			errorMessage := fmt.Sprintf("No score found with provided scoreID: %s", err)
-			log.Println(errorMessage)
-			respondWithError(w, 404, errorMessage)
-			return
-		}
-		// Handle other errors
-		errorMessage := fmt.Sprintf("GetScoreByID %v", err)
-		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
-		return
-	}
-	respondWithJSON(w, 200, ConvertScore(score))
-}
-
-func (h *Handler) GetScoresByUserID(w http.ResponseWriter, r *http.Request) {
-	userID, err := uuid.Parse(chi.URLParam(r, "id"))
-	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("error parsing userID: %s", err))
-		return
-	}
-
-	scores, err := h.queries.GetScoreByUserID(r.Context(), userID)
-	if err != nil {
-		// Handle "no rows found"
-		if errors.Is(err, pgx.ErrNoRows) {
-			errorMessage := fmt.Sprintf("No score found with provided scoreID: %s", err)
-			log.Println(errorMessage)
-			respondWithError(w, 404, errorMessage)
-			return
-		}
-		// Handle other errors
-		errorMessage := fmt.Sprintf("GetScoresByUserID %s", err)
-		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
-		return
-	}
-	respondWithJSON(w, 200, ConvertScores(scores))
-}
-
 // gets score by maiID (gameName + tagLine)
 func (h *Handler) GetScoresByMaiID(w http.ResponseWriter, r *http.Request) {
 	scores, err := h.queries.GetScoreByMaiID(r.Context(), database.GetScoreByMaiIDParams{
