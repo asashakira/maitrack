@@ -10,6 +10,7 @@ import (
 	"github.com/asashakira/mai.gg/internal/api/model"
 	database "github.com/asashakira/mai.gg/internal/database/sqlc"
 	"github.com/asashakira/mai.gg/internal/scraper"
+	"github.com/asashakira/mai.gg/utils"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"golang.org/x/crypto/bcrypt"
@@ -53,9 +54,9 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, errorMessage)
 		return
 	}
-	hashedSegaPassword, err := bcrypt.GenerateFromPassword([]byte(params.SegaPassword), bcrypt.DefaultCost)
+	encryptedSegaPassword, err := utils.Encrypt(params.SegaPassword)
 	if err != nil {
-		errorMessage := fmt.Sprintf("failed to hash sega password %s", err)
+		errorMessage := fmt.Sprintf("failed to encrypt sega password %s", err)
 		log.Println(errorMessage)
 		respondWithError(w, 400, errorMessage)
 		return
@@ -67,7 +68,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		Username:     params.Username,
 		Password:     string(hashedPassword),
 		SegaID:       params.SegaID,
-		SegaPassword: string(hashedSegaPassword),
+		SegaPassword: encryptedSegaPassword,
 		GameName:     params.GameName,
 		TagLine:      params.TagLine,
 	})

@@ -64,28 +64,52 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 
 const getAllUsers = `-- name: GetAllUsers :many
 select
-    user_id,
-    username,
-    password,
-    sega_id,
-    sega_password,
-    game_name,
-    tag_line,
-    updated_at,
-    created_at
+    users.user_id,
+    users.username,
+    users.password,
+    users.sega_id,
+    users.sega_password,
+    users.game_name,
+    users.tag_line,
+    user_data.rating,
+    user_data.season_play_count,
+    user_data.total_play_count
 from users
-order by updated_at desc
+left join (
+    select distinct on (user_data.user_id)
+        user_data.user_id,
+        user_data.rating,
+        user_data.season_play_count,
+        user_data.total_play_count,
+        user_data.created_at
+    from user_data
+    order by user_data.user_id asc, user_data.created_at desc
+) as user_data
+    on users.user_id = user_data.user_id
 `
 
-func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
+type GetAllUsersRow struct {
+	UserID          uuid.UUID
+	Username        string
+	Password        string
+	SegaID          string
+	SegaPassword    string
+	GameName        string
+	TagLine         string
+	Rating          int32
+	SeasonPlayCount int32
+	TotalPlayCount  int32
+}
+
+func (q *Queries) GetAllUsers(ctx context.Context) ([]GetAllUsersRow, error) {
 	rows, err := q.db.Query(ctx, getAllUsers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []User
+	var items []GetAllUsersRow
 	for rows.Next() {
-		var i User
+		var i GetAllUsersRow
 		if err := rows.Scan(
 			&i.UserID,
 			&i.Username,
@@ -94,8 +118,9 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
 			&i.SegaPassword,
 			&i.GameName,
 			&i.TagLine,
-			&i.UpdatedAt,
-			&i.CreatedAt,
+			&i.Rating,
+			&i.SeasonPlayCount,
+			&i.TotalPlayCount,
 		); err != nil {
 			return nil, err
 		}

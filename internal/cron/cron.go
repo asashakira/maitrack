@@ -20,10 +20,20 @@ func Run(pool *pgxpool.Pool) error {
 		return err
 	}
 
+	// ScrapeUsers
+	// Everyday At 7:00
+	_, err = c.AddFunc("0 7 * * *", func() {
+		scraper.ScrapeAllUsers(pool)
+	})
+	if err != nil {
+		return err
+	}
+
 	c.Start()
 
 	// run once immediately
-	go scraper.ScrapeSongsAndBeatmaps(pool)
+	// go scraper.ScrapeSongsAndBeatmaps(pool)
+	// go scraper.ScrapeAllUsers(pool)
 
 	return nil
 }
