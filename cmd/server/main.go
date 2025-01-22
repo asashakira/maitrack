@@ -6,6 +6,7 @@ import (
 
 	"github.com/asashakira/mai.gg/internal/api"
 	"github.com/asashakira/mai.gg/internal/api/handler"
+	"github.com/asashakira/mai.gg/internal/cron"
 	"github.com/asashakira/mai.gg/internal/database"
 	"github.com/joho/godotenv"
 )
@@ -26,6 +27,12 @@ func main() {
 	pool, err := database.Connect(port, dbURL)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	// cron worker
+	cronErr := cron.Run(pool)
+	if cronErr != nil {
+		log.Fatalf("cron error: %s", cronErr)
 	}
 
 	h := handler.New(pool)

@@ -22,9 +22,8 @@ type Beatmap struct {
 	Slide         int32
 	Touch         int32
 	Break         int32
-	NoteDesigner  pgtype.Text
+	NoteDesigner  string
 	MaxDxScore    int32
-	IsValid       bool
 	UpdatedAt     pgtype.Timestamp
 	CreatedAt     pgtype.Timestamp
 }

@@ -37,7 +37,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		SegaID:       params.SegaID,
 		SegaPassword: params.SegaPassword,
 	}
-	scrapeErr := scraper.FetchUserData(&u)
+	scrapeErr := scraper.ScrapeUserData(&u)
 	if scrapeErr != nil {
 		errorMessage := fmt.Sprintf("failed to fetch user data from maimaidxnet: %s", scrapeErr)
 		log.Println(errorMessage)
