@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/asashakira/mai.gg/internal/database/sqlc"
+	"github.com/asashakira/mai.gg/utils"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -105,12 +106,13 @@ func upsertSong(queries *sqlc.Queries, ms maimaisong) (sqlc.Song, error) {
 			// insert if it does not exist in DB
 			newSong, createSongErr := queries.CreateSong(context.Background(), sqlc.CreateSongParams{
 				SongID:      uuid.New(),
+				AltKey:      utils.CreateAltKey(ms.Title, ms.Artist),
 				Title:       ms.Title,
 				Artist:      ms.Artist,
 				Genre:       ms.Genre,
 				Bpm:         "",
 				ImageUrl:    "https://maimaidx.jp/maimai-mobile/img/Music/" + ms.ImageUrl,
-				Version:     ms.Version,
+				Version:     versionMap[ms.Version[0:3]],
 				IsUtage:     ms.Genre == "宴会場",
 				IsAvailable: true,
 				ReleaseDate: pgtype.Date{Time: releaseDate, Valid: true},
@@ -128,15 +130,17 @@ func upsertSong(queries *sqlc.Queries, ms maimaisong) (sqlc.Song, error) {
 	// update song
 	updatedSong, updateErr := queries.UpdateSong(context.Background(), sqlc.UpdateSongParams{
 		SongID:      song.SongID,
+		AltKey:      utils.CreateAltKey(ms.Title, ms.Artist),
 		Title:       ms.Title,
 		Artist:      ms.Artist,
 		Genre:       ms.Genre,
 		Bpm:         "",
 		ImageUrl:    "https://maimaidx.jp/maimai-mobile/img/Music/" + ms.ImageUrl,
-		Version:     ms.Version,
+		Version:     versionMap[ms.Version[0:3]],
 		IsUtage:     ms.Genre == "宴会場",
 		IsAvailable: true,
 		ReleaseDate: pgtype.Date{Time: releaseDate, Valid: true},
+		DeleteDate:  song.DeleteDate,
 	})
 	if updateErr != nil {
 		return sqlc.Song{}, fmt.Errorf("failed to update song: %w", updateErr)
@@ -185,7 +189,7 @@ func handleBeatmaps(queries *sqlc.Queries, songID uuid.UUID, ms maimaisong) erro
 			return err
 		}
 		// remaster don't always exist
-		if ms.ReMaster != "" {
+		if ms.DxReMaster != "" {
 			if _, err := upsertBeatmap(queries, songID, "remaster", ms.DxReMaster, beatmapType); err != nil {
 				return err
 			}
@@ -227,6 +231,8 @@ func upsertBeatmap(queries *sqlc.Queries, songID uuid.UUID, difficulty, level, b
 		}
 		return sqlc.Beatmap{}, fmt.Errorf("failed to get beatmap: %w", getBeatmapErr)
 	}
+
+	// FIXME: add update
 
 	return beatmap, nil
 }

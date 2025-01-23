@@ -17,6 +17,7 @@ type User struct {
 	Rating          int32            `json:"rating,omitempty"`
 	SeasonPlayCount int32            `json:"seasonPlayCount,omitempty"`
 	TotalPlayCount  int32            `json:"totalPlayCount,omitempty"`
+	LasyPlayedAt    pgtype.Date      `json:"lastPlayedAt,omitempty"`
 	CreatedAt       pgtype.Timestamp `json:"createdAt,omitempty"`
 	UpdatedAt       pgtype.Timestamp `json:"updatedAt,omitempty"`
 }

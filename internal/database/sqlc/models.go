@@ -107,7 +107,7 @@ type UserDatum struct {
 	CreatedAt       pgtype.Timestamp
 }
 
-type UserScrapeMetadatum struct {
+type UserMetadatum struct {
 	UserID       uuid.UUID
 	LastPlayedAt pgtype.Timestamp
 	UpdatedAt    pgtype.Timestamp
