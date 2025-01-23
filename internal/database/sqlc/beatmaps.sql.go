@@ -28,11 +28,10 @@ insert into beatmaps (
     break,
     note_designer,
     max_dx_score,
-    is_valid,
     updated_at,
     created_at
 )
-values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, now(), now())
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, now(), now())
 returning
     beatmap_id,
     song_id,
@@ -48,7 +47,6 @@ returning
     break,
     note_designer,
     max_dx_score,
-    is_valid,
     updated_at,
     created_at
 `
@@ -66,9 +64,8 @@ type CreateBeatmapParams struct {
 	Slide         int32
 	Touch         int32
 	Break         int32
-	NoteDesigner  pgtype.Text
+	NoteDesigner  string
 	MaxDxScore    int32
-	IsValid       bool
 }
 
 func (q *Queries) CreateBeatmap(ctx context.Context, arg CreateBeatmapParams) (Beatmap, error) {
@@ -87,7 +84,6 @@ func (q *Queries) CreateBeatmap(ctx context.Context, arg CreateBeatmapParams) (B
 		arg.Break,
 		arg.NoteDesigner,
 		arg.MaxDxScore,
-		arg.IsValid,
 	)
 	var i Beatmap
 	err := row.Scan(
@@ -105,7 +101,6 @@ func (q *Queries) CreateBeatmap(ctx context.Context, arg CreateBeatmapParams) (B
 		&i.Break,
 		&i.NoteDesigner,
 		&i.MaxDxScore,
-		&i.IsValid,
 		&i.UpdatedAt,
 		&i.CreatedAt,
 	)
@@ -128,7 +123,6 @@ select
     break,
     note_designer,
     max_dx_score,
-    is_valid,
     updated_at,
     created_at
 from beatmaps
@@ -158,7 +152,6 @@ func (q *Queries) GetAllBeatmaps(ctx context.Context) ([]Beatmap, error) {
 			&i.Break,
 			&i.NoteDesigner,
 			&i.MaxDxScore,
-			&i.IsValid,
 			&i.UpdatedAt,
 			&i.CreatedAt,
 		); err != nil {
@@ -188,7 +181,6 @@ select
     break,
     note_designer,
     max_dx_score,
-    is_valid,
     updated_at,
     created_at
 from beatmaps
@@ -213,7 +205,58 @@ func (q *Queries) GetBeatmapByBeatmapID(ctx context.Context, beatmapID uuid.UUID
 		&i.Break,
 		&i.NoteDesigner,
 		&i.MaxDxScore,
-		&i.IsValid,
+		&i.UpdatedAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getBeatmapBySongIDDifficultyAndType = `-- name: GetBeatmapBySongIDDifficultyAndType :one
+select
+    beatmap_id,
+    song_id,
+    difficulty,
+    level,
+    internal_level,
+    type,
+    total_notes,
+    tap,
+    hold,
+    slide,
+    touch,
+    break,
+    note_designer,
+    max_dx_score,
+    updated_at,
+    created_at
+from beatmaps
+where song_id = $1 and difficulty = $2 and type = $3
+`
+
+type GetBeatmapBySongIDDifficultyAndTypeParams struct {
+	SongID     uuid.UUID
+	Difficulty string
+	Type       string
+}
+
+func (q *Queries) GetBeatmapBySongIDDifficultyAndType(ctx context.Context, arg GetBeatmapBySongIDDifficultyAndTypeParams) (Beatmap, error) {
+	row := q.db.QueryRow(ctx, getBeatmapBySongIDDifficultyAndType, arg.SongID, arg.Difficulty, arg.Type)
+	var i Beatmap
+	err := row.Scan(
+		&i.BeatmapID,
+		&i.SongID,
+		&i.Difficulty,
+		&i.Level,
+		&i.InternalLevel,
+		&i.Type,
+		&i.TotalNotes,
+		&i.Tap,
+		&i.Hold,
+		&i.Slide,
+		&i.Touch,
+		&i.Break,
+		&i.NoteDesigner,
+		&i.MaxDxScore,
 		&i.UpdatedAt,
 		&i.CreatedAt,
 	)
@@ -236,7 +279,6 @@ select
     break,
     note_designer,
     max_dx_score,
-    is_valid,
     updated_at,
     created_at
 from beatmaps
@@ -267,7 +309,6 @@ func (q *Queries) GetBeatmapsBySongID(ctx context.Context, songID uuid.UUID) ([]
 			&i.Break,
 			&i.NoteDesigner,
 			&i.MaxDxScore,
-			&i.IsValid,
 			&i.UpdatedAt,
 			&i.CreatedAt,
 		); err != nil {
@@ -297,7 +338,6 @@ set
     break = $12,
     note_designer = $13,
     max_dx_score = $14,
-    is_valid = $15,
     updated_at = now()
 where beatmap_id = $1
 returning
@@ -315,7 +355,6 @@ returning
     break,
     note_designer,
     max_dx_score,
-    is_valid,
     updated_at,
     created_at
 `
@@ -333,9 +372,8 @@ type UpdateBeatmapParams struct {
 	Slide         int32
 	Touch         int32
 	Break         int32
-	NoteDesigner  pgtype.Text
+	NoteDesigner  string
 	MaxDxScore    int32
-	IsValid       bool
 }
 
 func (q *Queries) UpdateBeatmap(ctx context.Context, arg UpdateBeatmapParams) (Beatmap, error) {
@@ -354,7 +392,6 @@ func (q *Queries) UpdateBeatmap(ctx context.Context, arg UpdateBeatmapParams) (B
 		arg.Break,
 		arg.NoteDesigner,
 		arg.MaxDxScore,
-		arg.IsValid,
 	)
 	var i Beatmap
 	err := row.Scan(
@@ -372,7 +409,6 @@ func (q *Queries) UpdateBeatmap(ctx context.Context, arg UpdateBeatmapParams) (B
 		&i.Break,
 		&i.NoteDesigner,
 		&i.MaxDxScore,
-		&i.IsValid,
 		&i.UpdatedAt,
 		&i.CreatedAt,
 	)

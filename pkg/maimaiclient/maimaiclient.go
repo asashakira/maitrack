@@ -1,4 +1,4 @@
-package maimai
+package maimaiclient
 
 import (
 	"crypto/tls"

@@ -13,6 +13,10 @@ insert into users (
 values ($1, $2, $3, $4, $5, $6, $7, now(), now())
 returning user_id, username, password, sega_id, sega_password, game_name, tag_line, updated_at, created_at;
 
+-- name: GetAllUsers :many
+select *
+from users;
+
 -- name: GetUserByID :one
 select
     user_id,
@@ -54,20 +58,6 @@ select
     created_at
 from users
 where game_name = $1 and tag_line = $2;
-
--- name: GetAllUsers :many
-select
-    user_id,
-    username,
-    password,
-    sega_id,
-    sega_password,
-    game_name,
-    tag_line,
-    updated_at,
-    created_at
-from users
-order by updated_at desc;
 
 -- name: UpdateUser :one
 update users

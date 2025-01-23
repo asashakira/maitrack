@@ -107,6 +107,25 @@ select
 from songs
 where title = $1;
 
+-- name: GetSongByTitleAndArtist :one
+select
+    song_id,
+    alt_key,
+    title,
+    artist,
+    genre,
+    bpm,
+    image_url,
+    version,
+    is_utage,
+    is_available,
+    release_date,
+    delete_date,
+    updated_at,
+    created_at
+from songs
+where title = $1 and artist = $2;
+
 -- name: UpdateSong :one
 update songs
 set

@@ -12,24 +12,24 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type UserScrapeMetadata struct {
+type UserMetadata struct {
 	UserID       uuid.UUID        `json:"userID"`
 	LastPlayedAt pgtype.Timestamp `json:"lastPlayedAt"`
 	UpdatedAt    pgtype.Timestamp `json:"updatedAt"`
 	CreatedAt    pgtype.Timestamp `json:"createdAt"`
 }
 
-func (h *Handler) GetUserScrapeMetadataByUserID(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetUserMetadataByUserID(w http.ResponseWriter, r *http.Request) {
 	userid := chi.URLParam(r, "id")
-	user, err := h.queries.GetUserScrapeMetadataByUserID(r.Context(), uuid.MustParse(userid))
+	user, err := h.queries.GetUserMetadataByUserID(r.Context(), uuid.MustParse(userid))
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("GetUserScrapeMetadataByUserID Error: %v", err))
+		respondWithError(w, 400, fmt.Sprintf("GetUserMetadataByUserID Error: %v", err))
 		return
 	}
-	respondWithJSON(w, 200, ConvertUserScrapeMetadata(user))
+	respondWithJSON(w, 200, ConvertUserMetadata(user))
 }
 
-func (h *Handler) UpdateUserScrapeMetadata(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) UpdateUserMetadata(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		UserID       string `json:"userID"`
 		LastPlayedAt string `json:"lastPlayedAt"`
@@ -48,19 +48,19 @@ func (h *Handler) UpdateUserScrapeMetadata(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	user, err := h.queries.UpdateUserScrapeMetadata(r.Context(), database.UpdateUserScrapeMetadataParams{
+	user, err := h.queries.UpdateUserMetadata(r.Context(), database.UpdateUserMetadataParams{
 		UserID:       uuid.MustParse(params.UserID),
 		LastPlayedAt: pgtype.Timestamp{Time: lastPlayedAt, Valid: true},
 	})
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("UpdateUserScrapeMetadata Error: %v", err))
+		respondWithError(w, 400, fmt.Sprintf("UpdateUserMetadata Error: %v", err))
 		return
 	}
-	respondWithJSON(w, 200, ConvertUserScrapeMetadata(user))
+	respondWithJSON(w, 200, ConvertUserMetadata(user))
 }
 
-func ConvertUserScrapeMetadata(db database.UserScrapeMetadatum) UserScrapeMetadata {
-	return UserScrapeMetadata{
+func ConvertUserMetadata(db database.UserMetadatum) UserMetadata {
+	return UserMetadata{
 		UserID:       db.UserID,
 		LastPlayedAt: db.LastPlayedAt,
 		UpdatedAt:    db.UpdatedAt,

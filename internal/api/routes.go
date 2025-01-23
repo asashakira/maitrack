@@ -26,8 +26,8 @@ func SetUpRoutes(r *chi.Mux, h *handler.Handler) {
 	// user routes
 	v1Router.Get("/users/by-mai-id/{maiID}", h.GetUserByMaiID)
 	// v1Router.Patch("/users", h.UpdateUser)
-	v1Router.Get("/users/by-id/{id}/metadata", h.GetUserScrapeMetadataByUserID)
-	v1Router.Patch("/users/metadata", h.UpdateUserScrapeMetadata)
+	v1Router.Get("/users/by-id/{id}/metadata", h.GetUserMetadataByUserID)
+	v1Router.Patch("/users/metadata", h.UpdateUserMetadata)
 
 	// songs
 	v1Router.Get("/songs", h.GetAllSongs)

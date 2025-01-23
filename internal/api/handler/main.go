@@ -9,8 +9,8 @@ type Handler struct {
 	queries *sqlc.Queries
 }
 
-func New(conn *pgxpool.Pool) *Handler {
+func New(pool *pgxpool.Pool) *Handler {
 	return &Handler{
-		queries: sqlc.New(conn),
+		queries: sqlc.New(pool),
 	}
 }

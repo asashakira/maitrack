@@ -235,6 +235,53 @@ func (q *Queries) GetSongBySongID(ctx context.Context, songID uuid.UUID) (Song, 
 	return i, err
 }
 
+const getSongByTitleAndArtist = `-- name: GetSongByTitleAndArtist :one
+select
+    song_id,
+    alt_key,
+    title,
+    artist,
+    genre,
+    bpm,
+    image_url,
+    version,
+    is_utage,
+    is_available,
+    release_date,
+    delete_date,
+    updated_at,
+    created_at
+from songs
+where title = $1 and artist = $2
+`
+
+type GetSongByTitleAndArtistParams struct {
+	Title  string
+	Artist string
+}
+
+func (q *Queries) GetSongByTitleAndArtist(ctx context.Context, arg GetSongByTitleAndArtistParams) (Song, error) {
+	row := q.db.QueryRow(ctx, getSongByTitleAndArtist, arg.Title, arg.Artist)
+	var i Song
+	err := row.Scan(
+		&i.SongID,
+		&i.AltKey,
+		&i.Title,
+		&i.Artist,
+		&i.Genre,
+		&i.Bpm,
+		&i.ImageUrl,
+		&i.Version,
+		&i.IsUtage,
+		&i.IsAvailable,
+		&i.ReleaseDate,
+		&i.DeleteDate,
+		&i.UpdatedAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getSongsByTitle = `-- name: GetSongsByTitle :many
 select
     song_id,

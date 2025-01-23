@@ -10,6 +10,7 @@ import (
 	"github.com/asashakira/mai.gg/internal/api/model"
 	database "github.com/asashakira/mai.gg/internal/database/sqlc"
 	"github.com/asashakira/mai.gg/internal/scraper"
+	"github.com/asashakira/mai.gg/utils"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"golang.org/x/crypto/bcrypt"
@@ -37,7 +38,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		SegaID:       params.SegaID,
 		SegaPassword: params.SegaPassword,
 	}
-	scrapeErr := scraper.FetchUserData(&u)
+	scrapeErr := scraper.ScrapeUserData(&u)
 	if scrapeErr != nil {
 		errorMessage := fmt.Sprintf("failed to fetch user data from maimaidxnet: %s", scrapeErr)
 		log.Println(errorMessage)
@@ -53,9 +54,9 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, errorMessage)
 		return
 	}
-	hashedSegaPassword, err := bcrypt.GenerateFromPassword([]byte(params.SegaPassword), bcrypt.DefaultCost)
+	encryptedSegaPassword, err := utils.Encrypt(params.SegaPassword)
 	if err != nil {
-		errorMessage := fmt.Sprintf("failed to hash sega password %s", err)
+		errorMessage := fmt.Sprintf("failed to encrypt sega password %s", err)
 		log.Println(errorMessage)
 		respondWithError(w, 400, errorMessage)
 		return
@@ -67,7 +68,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		Username:     params.Username,
 		Password:     string(hashedPassword),
 		SegaID:       params.SegaID,
-		SegaPassword: string(hashedSegaPassword),
+		SegaPassword: encryptedSegaPassword,
 		GameName:     params.GameName,
 		TagLine:      params.TagLine,
 	})
@@ -97,7 +98,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	// create scrape metadata
 	defaultLastPlayedAtTime, _ := time.Parse("2006-01-02 15:04", "2006-01-02 15:04")
-	_, err = h.queries.CreateUserScrapeMetadata(r.Context(), database.CreateUserScrapeMetadataParams{
+	_, err = h.queries.CreateUserMetadata(r.Context(), database.CreateUserMetadataParams{
 		UserID:       user.UserID,
 		LastPlayedAt: pgtype.Timestamp{Time: defaultLastPlayedAtTime, Valid: true},
 	})

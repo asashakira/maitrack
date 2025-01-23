@@ -22,9 +22,8 @@ type Beatmap struct {
 	Slide         int32
 	Touch         int32
 	Break         int32
-	NoteDesigner  pgtype.Text
+	NoteDesigner  string
 	MaxDxScore    int32
-	IsValid       bool
 	UpdatedAt     pgtype.Timestamp
 	CreatedAt     pgtype.Timestamp
 }
@@ -108,7 +107,7 @@ type UserDatum struct {
 	CreatedAt       pgtype.Timestamp
 }
 
-type UserScrapeMetadatum struct {
+type UserMetadatum struct {
 	UserID       uuid.UUID
 	LastPlayedAt pgtype.Timestamp
 	UpdatedAt    pgtype.Timestamp

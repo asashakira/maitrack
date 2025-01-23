@@ -26,7 +26,7 @@ create table user_data (
     created_at timestamp not null
 );
 
-create table user_scrape_metadata (
+create table user_metadata (
     user_id uuid primary key references users (user_id) on delete cascade,
     last_played_at timestamp not null,
     updated_at timestamp not null,
@@ -34,9 +34,9 @@ create table user_scrape_metadata (
 );
 
 -- +goose Down
-drop table if exists users;
 drop index if exists idx_users_username;
 drop index if exists idx_users_sega_id;
 drop index if exists idx_users_mai_id;
 drop table if exists user_data cascade;
-drop table if exists user_scrape_metadata cascade;
+drop table if exists user_metadata cascade;
+drop table if exists users;
