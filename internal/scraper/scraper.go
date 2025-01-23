@@ -76,7 +76,7 @@ func ScrapeAllUsers(pool *pgxpool.Pool) {
 			TotalPlayCount:  fetchedUser.TotalPlayCount,
 		})
 		if createUserDataErr != nil {
-			log.Println(createUserDataErr)
+			log.Printf("failed to create user data for user '%s#%s': %s", u.GameName, u.TagLine, createUserDataErr)
 		}
 	}
 
