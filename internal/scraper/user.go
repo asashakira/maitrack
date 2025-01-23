@@ -2,13 +2,12 @@ package scraper
 
 import (
 	"fmt"
-	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/asashakira/mai.gg/internal/api/model"
 	"github.com/asashakira/mai.gg/pkg/maimaiclient"
+	"github.com/asashakira/mai.gg/utils"
 )
 
 // scrape rating and playcounts from maimaidxnet
@@ -33,25 +32,24 @@ func ScrapeUserData(user *model.User) error {
 	}
 
 	// rating
-	rating, atoiErr := strconv.Atoi(doc.Find(".rating_block").Text())
+	rating, atoiErr := utils.StringToInt32(doc.Find(".rating_block").Text())
 	if atoiErr != nil {
 		return atoiErr
 	}
-	user.Rating = int32(rating)
+	user.Rating = rating
 
 	// play count
 	playCounts := strings.Split(doc.Find(".m_5.m_b_5.t_r.f_12").Text(), "：")
-	re := regexp.MustCompile(`[^\d+]`)
-	seasonPlayCount, atoiErr := strconv.Atoi(re.ReplaceAllString(playCounts[1], ""))
+	seasonPlayCount, atoiErr := utils.StringToInt32(utils.RemoveFromString(playCounts[1], `[^\d+]`))
 	if atoiErr != nil {
 		return fmt.Errorf("failed to atoi seasonPlayCount: %w", atoiErr)
 	}
-	TotalPlayCount, atoiErr := strconv.Atoi(re.ReplaceAllString(playCounts[2], ""))
+	TotalPlayCount, atoiErr := utils.StringToInt32(utils.RemoveFromString(playCounts[2], `[^\d+]`))
 	if atoiErr != nil {
 		return fmt.Errorf("failed to atoi seasonPlayCount: %w", atoiErr)
 	}
-	user.SeasonPlayCount = int32(seasonPlayCount)
-	user.TotalPlayCount = int32(TotalPlayCount)
+	user.SeasonPlayCount = seasonPlayCount
+	user.TotalPlayCount = TotalPlayCount
 
 	return nil
 }
