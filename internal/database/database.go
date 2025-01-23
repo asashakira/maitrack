@@ -35,21 +35,17 @@ func Connect(port, dbURL string) (*pgxpool.Pool, error) {
 		return nil, fmt.Errorf("failed to connect to database after %d attempts: %w", maxRetries, err)
 	}
 
-	if err := runMigrations(pool); err != nil {
-		return nil, fmt.Errorf("migration error: %w", err)
-	}
-
 	return pool, nil
 }
 
-// goose migrations
-func runMigrations(pool *pgxpool.Pool) error {
+// goose up
+func Migrate(pool *pgxpool.Pool) error {
 	if err := goose.SetDialect("pgx"); err != nil {
 		return err
 	}
 
 	db := stdlib.OpenDBFromPool(pool)
-	if err := goose.Up(db, "./internal/database/migrations"); err != nil {
+	if err := goose.Up(db, "./internal/database/migration"); err != nil {
 		return err
 	}
 	return nil

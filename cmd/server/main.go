@@ -18,15 +18,20 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-
-	// connect to DB
 	dbURL := os.Getenv("DB_URL")
 	if dbURL == "" {
 		log.Fatal("DB_URL is not found in the environment")
 	}
+
+	// connect to database
 	pool, err := database.Connect(port, dbURL)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	// run database migration
+	if err := database.Migrate(pool); err != nil {
+		log.Printf("migration error: %s", err)
 	}
 
 	// cron worker
