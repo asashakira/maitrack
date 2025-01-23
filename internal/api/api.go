@@ -6,14 +6,16 @@ import (
 
 	"github.com/asashakira/mai.gg/internal/api/handler"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type API struct {
 	Router *chi.Mux
 }
 
-func New(h *handler.Handler) *API {
+func New(pool *pgxpool.Pool) *API {
 	router := chi.NewRouter()
+	h := handler.New(pool)
 	SetUpRoutes(router, h)
 	return &API{
 		Router: router,
