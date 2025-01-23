@@ -33,7 +33,7 @@ func Run(pool *pgxpool.Pool) error {
 
 	// run once immediately
 	scraper.ScrapeSongsAndBeatmaps(pool)
-	go scraper.ScrapeAllUsers(pool)
+	// go scraper.ScrapeAllUsers(pool)
 
 	return nil
 }

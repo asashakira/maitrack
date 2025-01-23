@@ -61,7 +61,7 @@ func scrapeScores(queries *sqlc.Queries, user sqlc.User) ([]model.Score, error) 
 		// skip if playedAt time is before lasyPlayedAt time
 		dateStr := s.Find(`.v_b`).Text()
 		playedAtString := utils.RemoveFromString(dateStr, `TRACK 0[0-9]`)
-		playedAt, _ := time.Parse("2006-01-02 15:04", utils.FormatDate(playedAtString))
+		playedAt, _ := utils.StringToUTCTime(utils.FormatDate(playedAtString))
 		if !playedAt.After(lastPlayedAt) {
 			return
 		}
@@ -190,7 +190,7 @@ func scrapeScore(queries *sqlc.Queries, m *maimaiclient.Client, recordID string)
 	// played at
 	dateStr := doc.Find(`.sub_title.t_c.f_r.f_11 .v_b`).Text()
 	playedAtString := utils.RemoveFromString(dateStr, `TRACK 0[0-9]`)
-	playedAt, timeParseErr := time.Parse("2006-01-02 15:04", utils.FormatDate(playedAtString))
+	playedAt, timeParseErr := utils.StringToUTCTime(utils.FormatDate(playedAtString))
 	if timeParseErr != nil {
 		return model.Score{}, fmt.Errorf("failed to parse time: %w", timeParseErr)
 	}

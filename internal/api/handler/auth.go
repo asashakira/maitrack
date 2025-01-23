@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/asashakira/mai.gg/internal/api/model"
 	database "github.com/asashakira/mai.gg/internal/database/sqlc"
@@ -97,7 +96,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create scrape metadata
-	defaultLastPlayedAtTime, _ := time.Parse("2006-01-02 15:04", "2006-01-02 15:04")
+	defaultLastPlayedAtTime, _ := utils.StringToUTCTime("2006-01-02 15:04")
 	_, err = h.queries.CreateUserMetadata(r.Context(), database.CreateUserMetadataParams{
 		UserID:       user.UserID,
 		LastPlayedAt: pgtype.Timestamp{Time: defaultLastPlayedAtTime, Valid: true},
