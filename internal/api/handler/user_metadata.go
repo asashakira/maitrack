@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	database "github.com/asashakira/mai.gg/internal/database/sqlc"
+	"github.com/asashakira/mai.gg/utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -42,7 +42,7 @@ func (h *Handler) UpdateUserMetadata(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	lastPlayedAt, err := time.Parse("2006-01-02 15:04", params.LastPlayedAt)
+	lastPlayedAt, err := utils.StringToUTCTime(params.LastPlayedAt)
 	if err != nil {
 		respondWithError(w, 400, fmt.Sprintf("error parsing last played at date: %v", err))
 		return

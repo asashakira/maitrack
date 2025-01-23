@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/asashakira/mai.gg/internal/api/model"
 	database "github.com/asashakira/mai.gg/internal/database/sqlc"
+	"github.com/asashakira/mai.gg/utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -67,7 +67,7 @@ func (h *Handler) CreateScore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	playedAt, err := time.Parse("2006-01-02 15:04", params.PlayedAt)
+	playedAt, err := utils.StringToUTCTime(params.PlayedAt)
 	if err != nil {
 		respondWithError(w, 400, fmt.Sprintf("error parsing played at date: %v", err))
 		return
@@ -141,4 +141,3 @@ func (h *Handler) GetScoresByMaiID(w http.ResponseWriter, r *http.Request) {
 	}
 	respondWithJSON(w, 200, model.ConvertScores(scores))
 }
-

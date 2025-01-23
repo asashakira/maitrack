@@ -7,10 +7,10 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/asashakira/mai.gg/internal/api/model"
 	database "github.com/asashakira/mai.gg/internal/database/sqlc"
+	"github.com/asashakira/mai.gg/utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -44,7 +44,7 @@ func (h *Handler) CreateSong(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	releaseDate, err := time.Parse("2006-01-02", params.ReleaseDate)
+	releaseDate, err := utils.StringToUTCTime(params.ReleaseDate)
 	if err != nil {
 		respondWithError(w, 400, fmt.Sprintf("error parsing release date: %v", err))
 		return
@@ -52,7 +52,7 @@ func (h *Handler) CreateSong(w http.ResponseWriter, r *http.Request) {
 
 	var deleteDate pgtype.Date
 	if params.DeleteDate != "" {
-		parsedDate, err := time.Parse("2006-01-02", params.DeleteDate)
+		parsedDate, err := utils.StringToUTCTime(params.DeleteDate)
 		deleteDate.Scan(parsedDate)
 		if err != nil {
 			respondWithError(w, 400, fmt.Sprintf("error parsing delete date: %v", err))
@@ -180,13 +180,13 @@ func (h *Handler) GetSongsByTitle(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		SongID      uuid.UUID `json:"songID"`
-		AltKey      *string    `json:"altkey,omitempty"`
-		Title       *string    `json:"title,omitempty"`
-		Artist      *string    `json:"artist,omitempty"`
-		Genre       *string    `json:"genre,omitempty"`
-		Bpm         *string    `json:"bpm,omitempty"`
-		ImageUrl    *string    `json:"imageUrl,omitempty"`
-		Version     *string    `json:"version,omitempty"`
+		AltKey      *string   `json:"altkey,omitempty"`
+		Title       *string   `json:"title,omitempty"`
+		Artist      *string   `json:"artist,omitempty"`
+		Genre       *string   `json:"genre,omitempty"`
+		Bpm         *string   `json:"bpm,omitempty"`
+		ImageUrl    *string   `json:"imageUrl,omitempty"`
+		Version     *string   `json:"version,omitempty"`
 		IsUtage     *bool     `json:"isUtage,omitempty"`
 		IsAvailable *bool     `json:"isAvailable,omitempty"`
 		ReleaseDate string    `json:"releaseDate,omitempty"`
@@ -212,7 +212,7 @@ func (h *Handler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 	// update release date if provided
 	releaseDate := song.ReleaseDate
 	if params.ReleaseDate != "" {
-		parsedDate, err := time.Parse("2006-01-02", params.ReleaseDate)
+		parsedDate, err := utils.StringToUTCTime(params.ReleaseDate)
 		releaseDate.Scan(parsedDate)
 		if err != nil {
 			respondWithError(w, 400, fmt.Sprintf("error parsing release date: %v", err))
@@ -223,7 +223,7 @@ func (h *Handler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 	// update delete date if provided
 	deleteDate := song.DeleteDate
 	if params.DeleteDate != "" {
-		parsedDate, err := time.Parse("2006-01-02", params.DeleteDate)
+		parsedDate, err := utils.StringToUTCTime(params.DeleteDate)
 		deleteDate.Scan(parsedDate)
 		if err != nil {
 			respondWithError(w, 400, fmt.Sprintf("error parsing delete date: %v", err))
@@ -254,4 +254,3 @@ func (h *Handler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 	}
 	respondWithJSON(w, 200, model.ConvertSong(updatedSong))
 }
-

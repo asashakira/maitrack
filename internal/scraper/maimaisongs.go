@@ -92,7 +92,8 @@ func handleEdgeCases(ms *maimaisong) {
 func upsertSong(queries *sqlc.Queries, ms maimaisong) (sqlc.Song, error) {
 	// format releaseDate
 	releaseDateString := fmt.Sprintf("20%v-%v-%v", ms.Release[0:2], ms.Release[2:4], ms.Release[4:6])
-	releaseDate, err := time.Parse("2006-01-02", releaseDateString)
+	jst, _ := time.LoadLocation("Asia/Tokyo")
+	releaseDate, err := time.ParseInLocation("2006-01-02", releaseDateString, jst)
 	if err != nil {
 		return sqlc.Song{}, err
 	}
