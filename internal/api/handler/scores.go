@@ -121,14 +121,24 @@ func (h *Handler) CreateScore(w http.ResponseWriter, r *http.Request) {
 
 // gets score by maiID (gameName + tagLine)
 func (h *Handler) GetScoresByMaiID(w http.ResponseWriter, r *http.Request) {
+	maiID := chi.URLParam(r, "maiID")
+
+	// get gamename and tagline
+	gameName, tagLine, decodeMaiIDErr := DecodeMaiID(maiID)
+	if decodeMaiIDErr != nil {
+		errorMessage := fmt.Sprintf("error decoding maiID %s", decodeMaiIDErr)
+		log.Println(errorMessage)
+		respondWithError(w, 400, errorMessage)
+		return
+	}
 	scores, err := h.queries.GetScoreByMaiID(r.Context(), database.GetScoreByMaiIDParams{
-		GameName: chi.URLParam(r, "gameName"),
-		TagLine:  chi.URLParam(r, "tagLine"),
+		GameName: gameName,
+		TagLine:  tagLine,
 	})
 	if err != nil {
 		// Handle "no rows found"
 		if errors.Is(err, pgx.ErrNoRows) {
-			errorMessage := fmt.Sprintf("No score found with provided MaiID: %s", err)
+			errorMessage := fmt.Sprintf("No score found with provided MaiID '%s': %s", maiID, err)
 			log.Println(errorMessage)
 			respondWithError(w, 404, errorMessage)
 			return
