@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/asashakira/mai.gg/internal/api/model"
-	"github.com/asashakira/mai.gg/internal/database/sqlc"
+	database "github.com/asashakira/mai.gg/internal/database/sqlc"
 	"github.com/asashakira/mai.gg/utils"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -16,7 +15,7 @@ import (
 func ScrapeSongsAndBeatmaps(pool *pgxpool.Pool) {
 	fmt.Println("ScrapeSongsAndBeatmaps Start")
 
-	queries := sqlc.New(pool)
+	queries := database.New(pool)
 
 	maimaisongs, err := fetchMaimaiSongs()
 	if err != nil {
@@ -44,7 +43,7 @@ func ScrapeSongsAndBeatmaps(pool *pgxpool.Pool) {
 func ScrapeAllUsers(pool *pgxpool.Pool) {
 	fmt.Println("ScrapeUsers Start")
 
-	queries := sqlc.New(pool)
+	queries := database.New(pool)
 
 	users, getErr := queries.GetAllUsers(context.Background())
 	if getErr != nil {
@@ -59,31 +58,27 @@ func ScrapeAllUsers(pool *pgxpool.Pool) {
 		}
 
 		// scrape user data
-		fetchedUser := model.User{
-			SegaID:       u.SegaID,
-			SegaPassword: decryptedSegaPassword,
-		}
-		scrapeErr := ScrapeUserData(&fetchedUser)
+		scrapedUserData, scrapeErr := ScrapeUserData(u.SegaID, decryptedSegaPassword)
 		if scrapeErr != nil {
 			log.Println(scrapeErr)
 			return
 		}
 
-		_, createUserDataErr := queries.CreateUserData(context.Background(), sqlc.CreateUserDataParams{
+		_, createUserDataErr := queries.CreateUserData(context.Background(), database.CreateUserDataParams{
 			ID:              uuid.New(),
 			UserID:          u.UserID,
 			GameName:        u.GameName,
 			TagLine:         u.TagLine,
-			Rating:          fetchedUser.Rating,
-			SeasonPlayCount: fetchedUser.SeasonPlayCount,
-			TotalPlayCount:  fetchedUser.TotalPlayCount,
+			Rating:          scrapedUserData.Rating,
+			SeasonPlayCount: scrapedUserData.SeasonPlayCount,
+			TotalPlayCount:  scrapedUserData.TotalPlayCount,
 		})
 		if createUserDataErr != nil {
 			log.Printf("failed to create user data for user '%s#%s': %s", u.GameName, u.TagLine, createUserDataErr)
 		}
 
 		// scrape scores
-		scores, scrapeErr := scrapeScores(queries, u)
+		scores, scrapeErr := scrapeScores(queries, u.SegaID, decryptedSegaPassword, u.LastPlayedAt.Time)
 		if scrapeErr != nil {
 			log.Println(scrapeErr)
 			return
@@ -114,7 +109,7 @@ func ScrapeAllUsers(pool *pgxpool.Pool) {
 
 		if lastPlayedAt.Valid {
 			// update LastPlayedAt
-			_, updateErr := queries.UpdateUserMetadata(context.Background(), sqlc.UpdateUserMetadataParams{
+			_, updateErr := queries.UpdateUserMetadata(context.Background(), database.UpdateUserMetadataParams{
 				UserID:       u.UserID,
 				LastPlayedAt: lastPlayedAt,
 			})
@@ -128,8 +123,8 @@ func ScrapeAllUsers(pool *pgxpool.Pool) {
 }
 
 // insert new score to database
-func createScore(queries *sqlc.Queries, score model.Score) error {
-	_, createScoreErr := queries.CreateScore(context.Background(), sqlc.CreateScoreParams{
+func createScore(queries *database.Queries, score database.Score) error {
+	_, createScoreErr := queries.CreateScore(context.Background(), database.CreateScoreParams{
 		ScoreID:       uuid.New(),
 		BeatmapID:     score.BeatmapID,
 		SongID:        score.SongID,
@@ -173,7 +168,7 @@ func createScore(queries *sqlc.Queries, score model.Score) error {
 }
 
 // update beatmap only if notes are not set
-func updateBeatmap(queries *sqlc.Queries, score model.Score) error {
+func updateBeatmap(queries *database.Queries, score database.Score) error {
 	beatmap, getErr := queries.GetBeatmapByBeatmapID(context.Background(), score.BeatmapID)
 	if getErr != nil {
 		return fmt.Errorf("failed to get beatmap: %w", getErr)
@@ -192,7 +187,7 @@ func updateBeatmap(queries *sqlc.Queries, score model.Score) error {
 	br := score.BreakCritical + score.BreakPerfect + score.BreakGreat + score.BreakGood + score.BreakMiss
 	totalNotes := tap + hold + slide + touch + br
 
-	_, updateErr := queries.UpdateBeatmap(context.Background(), sqlc.UpdateBeatmapParams{
+	_, updateErr := queries.UpdateBeatmap(context.Background(), database.UpdateBeatmapParams{
 		BeatmapID:     score.BeatmapID,
 		SongID:        score.SongID,
 		Difficulty:    beatmap.Difficulty,

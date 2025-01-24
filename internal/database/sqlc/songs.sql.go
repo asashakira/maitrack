@@ -48,18 +48,18 @@ returning
 `
 
 type CreateSongParams struct {
-	SongID      uuid.UUID
-	AltKey      string
-	Title       string
-	Artist      string
-	Genre       string
-	Bpm         string
-	ImageUrl    string
-	Version     string
-	IsUtage     bool
-	IsAvailable bool
-	ReleaseDate pgtype.Date
-	DeleteDate  pgtype.Date
+	SongID      uuid.UUID   `json:"songID"`
+	AltKey      string      `json:"altKey"`
+	Title       string      `json:"title"`
+	Artist      string      `json:"artist"`
+	Genre       string      `json:"genre"`
+	Bpm         string      `json:"bpm"`
+	ImageUrl    string      `json:"imageUrl"`
+	Version     string      `json:"version"`
+	IsUtage     bool        `json:"isUtage"`
+	IsAvailable bool        `json:"isAvailable"`
+	ReleaseDate pgtype.Date `json:"releaseDate"`
+	DeleteDate  pgtype.Date `json:"deleteDate"`
 }
 
 func (q *Queries) CreateSong(ctx context.Context, arg CreateSongParams) (Song, error) {
@@ -256,8 +256,8 @@ where title = $1 and artist = $2
 `
 
 type GetSongByTitleAndArtistParams struct {
-	Title  string
-	Artist string
+	Title  string `json:"title"`
+	Artist string `json:"artist"`
 }
 
 func (q *Queries) GetSongByTitleAndArtist(ctx context.Context, arg GetSongByTitleAndArtistParams) (Song, error) {
@@ -371,18 +371,18 @@ returning
 `
 
 type UpdateSongParams struct {
-	Title       string
-	AltKey      string
-	Artist      string
-	Genre       string
-	Bpm         string
-	ImageUrl    string
-	Version     string
-	IsUtage     bool
-	IsAvailable bool
-	ReleaseDate pgtype.Date
-	DeleteDate  pgtype.Date
-	SongID      uuid.UUID
+	Title       string      `json:"title"`
+	AltKey      string      `json:"altKey"`
+	Artist      string      `json:"artist"`
+	Genre       string      `json:"genre"`
+	Bpm         string      `json:"bpm"`
+	ImageUrl    string      `json:"imageUrl"`
+	Version     string      `json:"version"`
+	IsUtage     bool        `json:"isUtage"`
+	IsAvailable bool        `json:"isAvailable"`
+	ReleaseDate pgtype.Date `json:"releaseDate"`
+	DeleteDate  pgtype.Date `json:"deleteDate"`
+	SongID      uuid.UUID   `json:"songID"`
 }
 
 func (q *Queries) UpdateSong(ctx context.Context, arg UpdateSongParams) (Song, error) {

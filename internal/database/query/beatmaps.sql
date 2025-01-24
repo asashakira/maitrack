@@ -38,84 +38,83 @@ returning
 
 -- name: GetAllBeatmaps :many
 select
-    beatmap_id,
-    song_id,
-    difficulty,
-    level,
-    internal_level,
-    type,
-    total_notes,
-    tap,
-    hold,
-    slide,
-    touch,
-    break,
-    note_designer,
-    max_dx_score,
-    updated_at,
-    created_at
-from beatmaps;
+    beatmaps.beatmap_id,
+    beatmaps.song_id,
+    beatmaps.difficulty,
+    beatmaps.level,
+    beatmaps.internal_level,
+    beatmaps.type,
+    beatmaps.total_notes,
+    beatmaps.tap,
+    beatmaps.hold,
+    beatmaps.slide,
+    beatmaps.touch,
+    beatmaps.break,
+    beatmaps.note_designer,
+    beatmaps.max_dx_score,
+    songs.title,
+    songs.artist,
+    songs.genre,
+    songs.bpm,
+    songs.image_url,
+    songs.version
+from beatmaps
+inner join songs on beatmaps.song_id = songs.song_id;
 
 -- name: GetBeatmapByBeatmapID :one
 select
-    beatmap_id,
-    song_id,
-    difficulty,
-    level,
-    internal_level,
-    type,
-    total_notes,
-    tap,
-    hold,
-    slide,
-    touch,
-    break,
-    note_designer,
-    max_dx_score,
-    updated_at,
-    created_at
+    beatmaps.beatmap_id,
+    beatmaps.song_id,
+    beatmaps.difficulty,
+    beatmaps.level,
+    beatmaps.internal_level,
+    beatmaps.type,
+    beatmaps.total_notes,
+    beatmaps.tap,
+    beatmaps.hold,
+    beatmaps.slide,
+    beatmaps.touch,
+    beatmaps.break,
+    beatmaps.note_designer,
+    beatmaps.max_dx_score,
+    songs.title,
+    songs.artist,
+    songs.genre,
+    songs.bpm,
+    songs.image_url,
+    songs.version
 from beatmaps
-where beatmap_id = $1;
+inner join songs on beatmaps.song_id = songs.song_id
+where beatmaps.beatmap_id = $1;
 
 -- name: GetBeatmapsBySongID :many
 select
-    beatmap_id,
-    song_id,
-    difficulty,
-    level,
-    internal_level,
-    type,
-    total_notes,
-    tap,
-    hold,
-    slide,
-    touch,
-    break,
-    note_designer,
-    max_dx_score,
-    updated_at,
-    created_at
+    beatmaps.beatmap_id,
+    beatmaps.song_id,
+    beatmaps.difficulty,
+    beatmaps.level,
+    beatmaps.internal_level,
+    beatmaps.type,
+    beatmaps.total_notes,
+    beatmaps.tap,
+    beatmaps.hold,
+    beatmaps.slide,
+    beatmaps.touch,
+    beatmaps.break,
+    beatmaps.note_designer,
+    beatmaps.max_dx_score,
+    songs.title,
+    songs.artist,
+    songs.genre,
+    songs.bpm,
+    songs.image_url,
+    songs.version
 from beatmaps
-where song_id = $1;
+inner join songs on beatmaps.song_id = songs.song_id
+where beatmaps.song_id = $1;
 
 -- name: GetBeatmapBySongIDDifficultyAndType :one
-select
-    beatmap_id,
-    song_id,
-    difficulty,
-    level,
-    internal_level,
-    type,
-    total_notes,
-    tap,
-    hold,
-    slide,
-    touch,
-    break,
-    note_designer,
-    max_dx_score,
-    updated_at,
-    created_at
+select *
 from beatmaps
 where song_id = $1 and difficulty = $2 and type = $3;
 
@@ -137,20 +136,4 @@ set
     max_dx_score = $14,
     updated_at = now()
 where beatmap_id = $1
-returning
-    beatmap_id,
-    song_id,
-    difficulty,
-    level,
-    internal_level,
-    type,
-    total_notes,
-    tap,
-    hold,
-    slide,
-    touch,
-    break,
-    note_designer,
-    max_dx_score,
-    updated_at,
-    created_at;
+returning *;

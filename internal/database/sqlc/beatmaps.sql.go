@@ -52,20 +52,20 @@ returning
 `
 
 type CreateBeatmapParams struct {
-	BeatmapID     uuid.UUID
-	SongID        uuid.UUID
-	Difficulty    string
-	Level         string
-	InternalLevel pgtype.Numeric
-	Type          string
-	TotalNotes    int32
-	Tap           int32
-	Hold          int32
-	Slide         int32
-	Touch         int32
-	Break         int32
-	NoteDesigner  string
-	MaxDxScore    int32
+	BeatmapID     uuid.UUID      `json:"beatmapID"`
+	SongID        uuid.UUID      `json:"songID"`
+	Difficulty    string         `json:"difficulty"`
+	Level         string         `json:"level"`
+	InternalLevel pgtype.Numeric `json:"internalLevel"`
+	Type          string         `json:"type"`
+	TotalNotes    int32          `json:"totalNotes"`
+	Tap           int32          `json:"tap"`
+	Hold          int32          `json:"hold"`
+	Slide         int32          `json:"slide"`
+	Touch         int32          `json:"touch"`
+	Break         int32          `json:"break"`
+	NoteDesigner  string         `json:"noteDesigner"`
+	MaxDxScore    int32          `json:"maxDxScore"`
 }
 
 func (q *Queries) CreateBeatmap(ctx context.Context, arg CreateBeatmapParams) (Beatmap, error) {
@@ -109,34 +109,62 @@ func (q *Queries) CreateBeatmap(ctx context.Context, arg CreateBeatmapParams) (B
 
 const getAllBeatmaps = `-- name: GetAllBeatmaps :many
 select
-    beatmap_id,
-    song_id,
-    difficulty,
-    level,
-    internal_level,
-    type,
-    total_notes,
-    tap,
-    hold,
-    slide,
-    touch,
-    break,
-    note_designer,
-    max_dx_score,
-    updated_at,
-    created_at
+    beatmaps.beatmap_id,
+    beatmaps.song_id,
+    beatmaps.difficulty,
+    beatmaps.level,
+    beatmaps.internal_level,
+    beatmaps.type,
+    beatmaps.total_notes,
+    beatmaps.tap,
+    beatmaps.hold,
+    beatmaps.slide,
+    beatmaps.touch,
+    beatmaps.break,
+    beatmaps.note_designer,
+    beatmaps.max_dx_score,
+    songs.title,
+    songs.artist,
+    songs.genre,
+    songs.bpm,
+    songs.image_url,
+    songs.version
 from beatmaps
+inner join songs on beatmaps.song_id = songs.song_id
 `
 
-func (q *Queries) GetAllBeatmaps(ctx context.Context) ([]Beatmap, error) {
+type GetAllBeatmapsRow struct {
+	BeatmapID     uuid.UUID      `json:"beatmapID"`
+	SongID        uuid.UUID      `json:"songID"`
+	Difficulty    string         `json:"difficulty"`
+	Level         string         `json:"level"`
+	InternalLevel pgtype.Numeric `json:"internalLevel"`
+	Type          string         `json:"type"`
+	TotalNotes    int32          `json:"totalNotes"`
+	Tap           int32          `json:"tap"`
+	Hold          int32          `json:"hold"`
+	Slide         int32          `json:"slide"`
+	Touch         int32          `json:"touch"`
+	Break         int32          `json:"break"`
+	NoteDesigner  string         `json:"noteDesigner"`
+	MaxDxScore    int32          `json:"maxDxScore"`
+	Title         string         `json:"title"`
+	Artist        string         `json:"artist"`
+	Genre         string         `json:"genre"`
+	Bpm           string         `json:"bpm"`
+	ImageUrl      string         `json:"imageUrl"`
+	Version       string         `json:"version"`
+}
+
+func (q *Queries) GetAllBeatmaps(ctx context.Context) ([]GetAllBeatmapsRow, error) {
 	rows, err := q.db.Query(ctx, getAllBeatmaps)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Beatmap
+	var items []GetAllBeatmapsRow
 	for rows.Next() {
-		var i Beatmap
+		var i GetAllBeatmapsRow
 		if err := rows.Scan(
 			&i.BeatmapID,
 			&i.SongID,
@@ -152,8 +180,12 @@ func (q *Queries) GetAllBeatmaps(ctx context.Context) ([]Beatmap, error) {
 			&i.Break,
 			&i.NoteDesigner,
 			&i.MaxDxScore,
-			&i.UpdatedAt,
-			&i.CreatedAt,
+			&i.Title,
+			&i.Artist,
+			&i.Genre,
+			&i.Bpm,
+			&i.ImageUrl,
+			&i.Version,
 		); err != nil {
 			return nil, err
 		}
@@ -167,29 +199,57 @@ func (q *Queries) GetAllBeatmaps(ctx context.Context) ([]Beatmap, error) {
 
 const getBeatmapByBeatmapID = `-- name: GetBeatmapByBeatmapID :one
 select
-    beatmap_id,
-    song_id,
-    difficulty,
-    level,
-    internal_level,
-    type,
-    total_notes,
-    tap,
-    hold,
-    slide,
-    touch,
-    break,
-    note_designer,
-    max_dx_score,
-    updated_at,
-    created_at
+    beatmaps.beatmap_id,
+    beatmaps.song_id,
+    beatmaps.difficulty,
+    beatmaps.level,
+    beatmaps.internal_level,
+    beatmaps.type,
+    beatmaps.total_notes,
+    beatmaps.tap,
+    beatmaps.hold,
+    beatmaps.slide,
+    beatmaps.touch,
+    beatmaps.break,
+    beatmaps.note_designer,
+    beatmaps.max_dx_score,
+    songs.title,
+    songs.artist,
+    songs.genre,
+    songs.bpm,
+    songs.image_url,
+    songs.version
 from beatmaps
-where beatmap_id = $1
+inner join songs on beatmaps.song_id = songs.song_id
+where beatmaps.beatmap_id = $1
 `
 
-func (q *Queries) GetBeatmapByBeatmapID(ctx context.Context, beatmapID uuid.UUID) (Beatmap, error) {
+type GetBeatmapByBeatmapIDRow struct {
+	BeatmapID     uuid.UUID      `json:"beatmapID"`
+	SongID        uuid.UUID      `json:"songID"`
+	Difficulty    string         `json:"difficulty"`
+	Level         string         `json:"level"`
+	InternalLevel pgtype.Numeric `json:"internalLevel"`
+	Type          string         `json:"type"`
+	TotalNotes    int32          `json:"totalNotes"`
+	Tap           int32          `json:"tap"`
+	Hold          int32          `json:"hold"`
+	Slide         int32          `json:"slide"`
+	Touch         int32          `json:"touch"`
+	Break         int32          `json:"break"`
+	NoteDesigner  string         `json:"noteDesigner"`
+	MaxDxScore    int32          `json:"maxDxScore"`
+	Title         string         `json:"title"`
+	Artist        string         `json:"artist"`
+	Genre         string         `json:"genre"`
+	Bpm           string         `json:"bpm"`
+	ImageUrl      string         `json:"imageUrl"`
+	Version       string         `json:"version"`
+}
+
+func (q *Queries) GetBeatmapByBeatmapID(ctx context.Context, beatmapID uuid.UUID) (GetBeatmapByBeatmapIDRow, error) {
 	row := q.db.QueryRow(ctx, getBeatmapByBeatmapID, beatmapID)
-	var i Beatmap
+	var i GetBeatmapByBeatmapIDRow
 	err := row.Scan(
 		&i.BeatmapID,
 		&i.SongID,
@@ -205,38 +265,26 @@ func (q *Queries) GetBeatmapByBeatmapID(ctx context.Context, beatmapID uuid.UUID
 		&i.Break,
 		&i.NoteDesigner,
 		&i.MaxDxScore,
-		&i.UpdatedAt,
-		&i.CreatedAt,
+		&i.Title,
+		&i.Artist,
+		&i.Genre,
+		&i.Bpm,
+		&i.ImageUrl,
+		&i.Version,
 	)
 	return i, err
 }
 
 const getBeatmapBySongIDDifficultyAndType = `-- name: GetBeatmapBySongIDDifficultyAndType :one
-select
-    beatmap_id,
-    song_id,
-    difficulty,
-    level,
-    internal_level,
-    type,
-    total_notes,
-    tap,
-    hold,
-    slide,
-    touch,
-    break,
-    note_designer,
-    max_dx_score,
-    updated_at,
-    created_at
+select beatmap_id, song_id, difficulty, level, internal_level, type, total_notes, tap, hold, slide, touch, break, note_designer, max_dx_score, updated_at, created_at
 from beatmaps
 where song_id = $1 and difficulty = $2 and type = $3
 `
 
 type GetBeatmapBySongIDDifficultyAndTypeParams struct {
-	SongID     uuid.UUID
-	Difficulty string
-	Type       string
+	SongID     uuid.UUID `json:"songID"`
+	Difficulty string    `json:"difficulty"`
+	Type       string    `json:"type"`
 }
 
 func (q *Queries) GetBeatmapBySongIDDifficultyAndType(ctx context.Context, arg GetBeatmapBySongIDDifficultyAndTypeParams) (Beatmap, error) {
@@ -265,35 +313,63 @@ func (q *Queries) GetBeatmapBySongIDDifficultyAndType(ctx context.Context, arg G
 
 const getBeatmapsBySongID = `-- name: GetBeatmapsBySongID :many
 select
-    beatmap_id,
-    song_id,
-    difficulty,
-    level,
-    internal_level,
-    type,
-    total_notes,
-    tap,
-    hold,
-    slide,
-    touch,
-    break,
-    note_designer,
-    max_dx_score,
-    updated_at,
-    created_at
+    beatmaps.beatmap_id,
+    beatmaps.song_id,
+    beatmaps.difficulty,
+    beatmaps.level,
+    beatmaps.internal_level,
+    beatmaps.type,
+    beatmaps.total_notes,
+    beatmaps.tap,
+    beatmaps.hold,
+    beatmaps.slide,
+    beatmaps.touch,
+    beatmaps.break,
+    beatmaps.note_designer,
+    beatmaps.max_dx_score,
+    songs.title,
+    songs.artist,
+    songs.genre,
+    songs.bpm,
+    songs.image_url,
+    songs.version
 from beatmaps
-where song_id = $1
+inner join songs on beatmaps.song_id = songs.song_id
+where beatmaps.song_id = $1
 `
 
-func (q *Queries) GetBeatmapsBySongID(ctx context.Context, songID uuid.UUID) ([]Beatmap, error) {
+type GetBeatmapsBySongIDRow struct {
+	BeatmapID     uuid.UUID      `json:"beatmapID"`
+	SongID        uuid.UUID      `json:"songID"`
+	Difficulty    string         `json:"difficulty"`
+	Level         string         `json:"level"`
+	InternalLevel pgtype.Numeric `json:"internalLevel"`
+	Type          string         `json:"type"`
+	TotalNotes    int32          `json:"totalNotes"`
+	Tap           int32          `json:"tap"`
+	Hold          int32          `json:"hold"`
+	Slide         int32          `json:"slide"`
+	Touch         int32          `json:"touch"`
+	Break         int32          `json:"break"`
+	NoteDesigner  string         `json:"noteDesigner"`
+	MaxDxScore    int32          `json:"maxDxScore"`
+	Title         string         `json:"title"`
+	Artist        string         `json:"artist"`
+	Genre         string         `json:"genre"`
+	Bpm           string         `json:"bpm"`
+	ImageUrl      string         `json:"imageUrl"`
+	Version       string         `json:"version"`
+}
+
+func (q *Queries) GetBeatmapsBySongID(ctx context.Context, songID uuid.UUID) ([]GetBeatmapsBySongIDRow, error) {
 	rows, err := q.db.Query(ctx, getBeatmapsBySongID, songID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Beatmap
+	var items []GetBeatmapsBySongIDRow
 	for rows.Next() {
-		var i Beatmap
+		var i GetBeatmapsBySongIDRow
 		if err := rows.Scan(
 			&i.BeatmapID,
 			&i.SongID,
@@ -309,8 +385,12 @@ func (q *Queries) GetBeatmapsBySongID(ctx context.Context, songID uuid.UUID) ([]
 			&i.Break,
 			&i.NoteDesigner,
 			&i.MaxDxScore,
-			&i.UpdatedAt,
-			&i.CreatedAt,
+			&i.Title,
+			&i.Artist,
+			&i.Genre,
+			&i.Bpm,
+			&i.ImageUrl,
+			&i.Version,
 		); err != nil {
 			return nil, err
 		}
@@ -340,40 +420,24 @@ set
     max_dx_score = $14,
     updated_at = now()
 where beatmap_id = $1
-returning
-    beatmap_id,
-    song_id,
-    difficulty,
-    level,
-    internal_level,
-    type,
-    total_notes,
-    tap,
-    hold,
-    slide,
-    touch,
-    break,
-    note_designer,
-    max_dx_score,
-    updated_at,
-    created_at
+returning beatmap_id, song_id, difficulty, level, internal_level, type, total_notes, tap, hold, slide, touch, break, note_designer, max_dx_score, updated_at, created_at
 `
 
 type UpdateBeatmapParams struct {
-	BeatmapID     uuid.UUID
-	SongID        uuid.UUID
-	Difficulty    string
-	Level         string
-	InternalLevel pgtype.Numeric
-	Type          string
-	TotalNotes    int32
-	Tap           int32
-	Hold          int32
-	Slide         int32
-	Touch         int32
-	Break         int32
-	NoteDesigner  string
-	MaxDxScore    int32
+	BeatmapID     uuid.UUID      `json:"beatmapID"`
+	SongID        uuid.UUID      `json:"songID"`
+	Difficulty    string         `json:"difficulty"`
+	Level         string         `json:"level"`
+	InternalLevel pgtype.Numeric `json:"internalLevel"`
+	Type          string         `json:"type"`
+	TotalNotes    int32          `json:"totalNotes"`
+	Tap           int32          `json:"tap"`
+	Hold          int32          `json:"hold"`
+	Slide         int32          `json:"slide"`
+	Touch         int32          `json:"touch"`
+	Break         int32          `json:"break"`
+	NoteDesigner  string         `json:"noteDesigner"`
+	MaxDxScore    int32          `json:"maxDxScore"`
 }
 
 func (q *Queries) UpdateBeatmap(ctx context.Context, arg UpdateBeatmapParams) (Beatmap, error) {
