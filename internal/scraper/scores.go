@@ -11,8 +11,7 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/asashakira/mai.gg/internal/api/model"
-	"github.com/asashakira/mai.gg/internal/database/sqlc"
+	database "github.com/asashakira/mai.gg/internal/database/sqlc"
 	"github.com/asashakira/mai.gg/pkg/maimaiclient"
 	"github.com/asashakira/mai.gg/utils"
 	"github.com/google/uuid"
@@ -22,15 +21,10 @@ import (
 
 // scrape user scores from maimaidxnet
 // returns nil if nothing to update
-func scrapeScores(queries *sqlc.Queries, user sqlc.User) ([]model.Score, error) {
-	// decrypt password
-	decryptedSegaPassword, decryptErr := utils.Decrypt(user.SegaPassword)
-	if decryptErr != nil {
-		return nil, fmt.Errorf("failed to decrypt sega password: %s", decryptErr)
-	}
+func scrapeScores(queries *database.Queries, segaID, segaPassword string, lastPlayedAt time.Time) ([]database.Score, error) {
 	// Login
 	m := maimaiclient.New()
-	err := m.Login(user.SegaID, decryptedSegaPassword)
+	err := m.Login(segaID, segaPassword)
 	if err != nil {
 		return nil, fmt.Errorf("failed to login to maimai: %w", err)
 	}
@@ -46,13 +40,6 @@ func scrapeScores(queries *sqlc.Queries, user sqlc.User) ([]model.Score, error) 
 	if err != nil {
 		return nil, err
 	}
-
-	// get lastPlayedAt time
-	userMetadata, getErr := queries.GetUserMetadataByUserID(context.Background(), user.UserID)
-	if getErr != nil {
-		return nil, fmt.Errorf("failed to get user metadata: %w", getErr)
-	}
-	lastPlayedAt := userMetadata.LastPlayedAt.Time
 
 	// extract hidden values from recordIDs
 	var recordIDs []string
@@ -82,15 +69,12 @@ func scrapeScores(queries *sqlc.Queries, user sqlc.User) ([]model.Score, error) 
 	slices.Reverse(recordIDs)
 
 	// scrape scores
-	var scores []model.Score
+	var scores []database.Score
 	for _, recordID := range recordIDs {
 		score, err := scrapeScore(queries, m, recordID)
 		if err != nil {
 			log.Printf("failed scraping score: '%s' %s\n", recordID, err)
 		}
-
-		// add user id
-		score.UserID = user.UserID
 
 		scores = append(scores, score)
 
@@ -106,21 +90,21 @@ func scrapeScores(queries *sqlc.Queries, user sqlc.User) ([]model.Score, error) 
 
 // scrape score details
 // provide hiddenValue found in a hidden tag at records page
-func scrapeScore(queries *sqlc.Queries, m *maimaiclient.Client, recordID string) (model.Score, error) {
+func scrapeScore(queries *database.Queries, m *maimaiclient.Client, recordID string) (database.Score, error) {
 	url := maimaiclient.BaseURL + "/record/playlogDetail/?idx=" + url.QueryEscape(recordID)
 	r, err := m.HTTPClient.Get(url)
 	if err != nil {
-		return model.Score{}, fmt.Errorf("request failed: %w", err)
+		return database.Score{}, fmt.Errorf("request failed: %w", err)
 	}
 
 	doc, err := goquery.NewDocumentFromReader(r.Body)
 	defer r.Body.Close()
 	if err != nil {
-		return model.Score{}, err
+		return database.Score{}, err
 	}
 
 	// score to return
-	var score model.Score
+	var score database.Score
 
 	// accuracy
 	score.Accuracy = doc.Find(`.playlog_achievement_txt`).Text()
@@ -192,7 +176,7 @@ func scrapeScore(queries *sqlc.Queries, m *maimaiclient.Client, recordID string)
 	playedAtString := utils.RemoveFromString(dateStr, `TRACK 0[0-9]`)
 	playedAt, timeParseErr := utils.StringToUTCTime(utils.FormatDate(playedAtString))
 	if timeParseErr != nil {
-		return model.Score{}, fmt.Errorf("failed to parse time: %w", timeParseErr)
+		return database.Score{}, fmt.Errorf("failed to parse time: %w", timeParseErr)
 	}
 	score.PlayedAt = pgtype.Timestamp{Time: playedAt, Valid: true}
 
@@ -209,7 +193,7 @@ func scrapeScore(queries *sqlc.Queries, m *maimaiclient.Client, recordID string)
 	// ids
 	songID, beatmapID, err := getSongAndBeatmapID(queries, title, difficulty, beatmapType, imageURL)
 	if err != nil {
-		return model.Score{}, err
+		return database.Score{}, err
 	}
 	score.SongID = songID
 	score.BeatmapID = beatmapID
@@ -218,7 +202,7 @@ func scrapeScore(queries *sqlc.Queries, m *maimaiclient.Client, recordID string)
 }
 
 // Helper function to set note values based on index
-func setNoteValue(score *model.Score, noteType string, idx int, value string) {
+func setNoteValue(score *database.Score, noteType string, idx int, value string) {
 	// A map for each note type with corresponding fields
 	noteFieldMap := map[string][]*int32{
 		"Tap":   {&score.TapCritical, &score.TapPerfect, &score.TapGreat, &score.TapGood, &score.TapMiss},
@@ -238,7 +222,7 @@ func setNoteValue(score *model.Score, noteType string, idx int, value string) {
 }
 
 // get song and beatmap from database to get their ids
-func getSongAndBeatmapID(queries *sqlc.Queries, title, difficulty, beatmapType string, imageURL string) (uuid.UUID, uuid.UUID, error) {
+func getSongAndBeatmapID(queries *database.Queries, title, difficulty, beatmapType string, imageURL string) (uuid.UUID, uuid.UUID, error) {
 	var songID uuid.UUID
 	var beatmapID uuid.UUID
 
@@ -257,7 +241,7 @@ func getSongAndBeatmapID(queries *sqlc.Queries, title, difficulty, beatmapType s
 		}
 
 		// get beatmap
-		beatmap, getBeatmapErr := queries.GetBeatmapBySongIDDifficultyAndType(context.Background(), sqlc.GetBeatmapBySongIDDifficultyAndTypeParams{
+		beatmap, getBeatmapErr := queries.GetBeatmapBySongIDDifficultyAndType(context.Background(), database.GetBeatmapBySongIDDifficultyAndTypeParams{
 			SongID:     s.SongID,
 			Difficulty: difficulty,
 			Type:       beatmapType,

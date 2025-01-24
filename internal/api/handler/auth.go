@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/asashakira/mai.gg/internal/api/model"
 	database "github.com/asashakira/mai.gg/internal/database/sqlc"
 	"github.com/asashakira/mai.gg/internal/scraper"
 	"github.com/asashakira/mai.gg/utils"
@@ -19,10 +18,10 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Username     string `json:"username"`
 		Password     string `json:"password"`
-		GameName     string `json:"gameName"`
-		TagLine      string `json:"tagLine"`
 		SegaID       string `json:"segaID"`
 		SegaPassword string `json:"segaPassword"`
+		GameName     string `json:"gameName"`
+		TagLine      string `json:"tagLine"`
 	}
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
@@ -33,13 +32,9 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// scrape user data to make sure segaID and segaPassword is valid
-	u := model.User{
-		SegaID:       params.SegaID,
-		SegaPassword: params.SegaPassword,
-	}
-	scrapeErr := scraper.ScrapeUserData(&u)
+	scrapedUserData, scrapeErr := scraper.ScrapeUserData(params.SegaID, params.Password)
 	if scrapeErr != nil {
-		errorMessage := fmt.Sprintf("failed to fetch user data from maimaidxnet: %s", scrapeErr)
+		errorMessage := fmt.Sprintf("failed to scrape user data from maimaidxnet: %s", scrapeErr)
 		log.Println(errorMessage)
 		respondWithError(w, 400, errorMessage)
 		return
@@ -61,7 +56,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// insert to users table
+	// create user
 	user, err := h.queries.CreateUser(r.Context(), database.CreateUserParams{
 		UserID:       uuid.New(),
 		Username:     params.Username,
@@ -72,7 +67,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		TagLine:      params.TagLine,
 	})
 	if err != nil {
-		errorMessage := fmt.Sprintf("CreateUser %s", err)
+		errorMessage := fmt.Sprintf("Error Creating User: %s", err)
 		log.Println(errorMessage)
 		respondWithError(w, 400, errorMessage)
 		return
@@ -82,11 +77,11 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	userData, err := h.queries.CreateUserData(r.Context(), database.CreateUserDataParams{
 		ID:              uuid.New(),
 		UserID:          user.UserID,
-		GameName:        params.GameName,
-		TagLine:         params.TagLine,
-		Rating:          u.Rating,
-		SeasonPlayCount: u.SeasonPlayCount,
-		TotalPlayCount:  u.TotalPlayCount,
+		GameName:        user.GameName,
+		TagLine:         user.TagLine,
+		Rating:          scrapedUserData.Rating,
+		SeasonPlayCount: scrapedUserData.SeasonPlayCount,
+		TotalPlayCount:  scrapedUserData.TotalPlayCount,
 	})
 	if err != nil {
 		errorMessage := fmt.Sprintf("Error Creating UserData: %s", err)
@@ -95,18 +90,29 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// create scrape metadata
 	defaultLastPlayedAtTime, _ := utils.StringToUTCTime("2006-01-02 15:04")
-	_, err = h.queries.CreateUserMetadata(r.Context(), database.CreateUserMetadataParams{
+	// create scrape metadata
+	usermetadata, err := h.queries.CreateUserMetadata(r.Context(), database.CreateUserMetadataParams{
 		UserID:       user.UserID,
 		LastPlayedAt: pgtype.Timestamp{Time: defaultLastPlayedAtTime, Valid: true},
 	})
 	if err != nil {
-		errorMessage := fmt.Sprintf("CreateUserScrapeMetadata %s", err)
+		errorMessage := fmt.Sprintf("Error Creating UserMetadata: %s", err)
 		log.Println(errorMessage)
 		respondWithError(w, 400, errorMessage)
 		return
 	}
 
-	respondWithJSON(w, 200, model.ConvertUser(user, userData))
+	data := map[string]interface{}{
+		"userID":          user.UserID,
+		"username":        user.Username,
+		"gameName":        user.GameName,
+		"tagLine":         user.TagLine,
+		"rating":          userData.Rating,
+		"seasonPlayCount": userData.SeasonPlayCount,
+		"totalPlayCount":  userData.TotalPlayCount,
+		"lastPlayedAt":    usermetadata.LastPlayedAt,
+	}
+
+	respondWithJSON(w, 200, data)
 }

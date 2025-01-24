@@ -7,47 +7,12 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/asashakira/mai.gg/internal/api/model"
 	database "github.com/asashakira/mai.gg/internal/database/sqlc"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
-
-func (h *Handler) GetAllBeatmaps(w http.ResponseWriter, r *http.Request) {
-	beatmaps, err := h.queries.GetAllBeatmaps(r.Context())
-	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("GetAllBeatmaps %v", err))
-		return
-	}
-	respondWithJSON(w, 200, model.ConvertBeatmaps(beatmaps))
-}
-
-func (h *Handler) GetBeatmapsBySongID(w http.ResponseWriter, r *http.Request) {
-	songID, err := uuid.Parse(chi.URLParam(r, "songID"))
-	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("error parsing songID: %v", err))
-		return
-	}
-
-	beatmaps, err := h.queries.GetBeatmapsBySongID(r.Context(), songID)
-	if err != nil {
-		// Handle "no rows found"
-		if errors.Is(err, pgx.ErrNoRows) {
-			errorMessage := fmt.Sprintf("No beatmaps found with provided songID: %s", err)
-			log.Println(errorMessage)
-			respondWithError(w, 404, errorMessage)
-			return
-		}
-		// Handle other errors
-		errorMessage := fmt.Sprintf("GetBeatmapsBySongID %v", err)
-		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
-		return
-	}
-	respondWithJSON(w, 200, model.ConvertBeatmaps(beatmaps))
-}
 
 func (h *Handler) CreateBeatmap(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
@@ -70,7 +35,7 @@ func (h *Handler) CreateBeatmap(w http.ResponseWriter, r *http.Request) {
 	params := parameters{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("Error parsing JSON: %v", err))
+		respondWithError(w, 400, fmt.Sprintf("Error parsing JSON: %s", err))
 		return
 	}
 
@@ -91,10 +56,44 @@ func (h *Handler) CreateBeatmap(w http.ResponseWriter, r *http.Request) {
 		MaxDxScore:    params.MaxDxScore,
 	})
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("CreateBeatmap %v", err))
+		respondWithError(w, 400, fmt.Sprintf("CreateBeatmap %s", err))
 		return
 	}
-	respondWithJSON(w, 200, model.ConvertBeatmap(beatmap))
+	respondWithJSON(w, 200, beatmap)
+}
+
+func (h *Handler) GetAllBeatmaps(w http.ResponseWriter, r *http.Request) {
+	beatmaps, err := h.queries.GetAllBeatmaps(r.Context())
+	if err != nil {
+		respondWithError(w, 400, fmt.Sprintf("GetAllBeatmaps %s", err))
+		return
+	}
+	respondWithJSON(w, 200, beatmaps)
+}
+
+func (h *Handler) GetBeatmapsBySongID(w http.ResponseWriter, r *http.Request) {
+	songID, err := uuid.Parse(chi.URLParam(r, "songID"))
+	if err != nil {
+		respondWithError(w, 400, fmt.Sprintf("error parsing songID: %s", err))
+		return
+	}
+
+	beatmaps, err := h.queries.GetBeatmapsBySongID(r.Context(), songID)
+	if err != nil {
+		// Handle "no rows found"
+		if errors.Is(err, pgx.ErrNoRows) {
+			errorMessage := fmt.Sprintf("No beatmaps found with provided songID: %s", err)
+			log.Println(errorMessage)
+			respondWithError(w, 404, errorMessage)
+			return
+		}
+		// Handle other errors
+		errorMessage := fmt.Sprintf("GetBeatmapsBySongID %s", err)
+		log.Println(errorMessage)
+		respondWithError(w, 400, errorMessage)
+		return
+	}
+	respondWithJSON(w, 200, beatmaps)
 }
 
 func (h *Handler) UpdateBeatmap(w http.ResponseWriter, r *http.Request) {
@@ -126,7 +125,7 @@ func (h *Handler) UpdateBeatmap(w http.ResponseWriter, r *http.Request) {
 	// Fetch existing beatmap
 	beatmap, err := h.queries.GetBeatmapByBeatmapID(r.Context(), params.BeatmapID)
 	if err != nil {
-		errorMessage := fmt.Sprintf("beatmap not found %v", err)
+		errorMessage := fmt.Sprintf("beatmap not found %s", err)
 		log.Println(errorMessage)
 		respondWithError(w, 400, errorMessage)
 		return
@@ -149,8 +148,8 @@ func (h *Handler) UpdateBeatmap(w http.ResponseWriter, r *http.Request) {
 		MaxDxScore:    ifNotNil(params.MaxDxScore, beatmap.MaxDxScore),
 	})
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("UpdateBeatmap %v", err))
+		respondWithError(w, 400, fmt.Sprintf("UpdateBeatmap %s", err))
 		return
 	}
-	respondWithJSON(w, 200, model.ConvertBeatmap(updatedBeatmap))
+	respondWithJSON(w, 200, updatedBeatmap)
 }

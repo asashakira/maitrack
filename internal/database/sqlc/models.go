@@ -10,106 +10,106 @@ import (
 )
 
 type Beatmap struct {
-	BeatmapID     uuid.UUID
-	SongID        uuid.UUID
-	Difficulty    string
-	Level         string
-	InternalLevel pgtype.Numeric
-	Type          string
-	TotalNotes    int32
-	Tap           int32
-	Hold          int32
-	Slide         int32
-	Touch         int32
-	Break         int32
-	NoteDesigner  string
-	MaxDxScore    int32
-	UpdatedAt     pgtype.Timestamp
-	CreatedAt     pgtype.Timestamp
+	BeatmapID     uuid.UUID        `json:"beatmapID"`
+	SongID        uuid.UUID        `json:"songID"`
+	Difficulty    string           `json:"difficulty"`
+	Level         string           `json:"level"`
+	InternalLevel pgtype.Numeric   `json:"internalLevel"`
+	Type          string           `json:"type"`
+	TotalNotes    int32            `json:"totalNotes"`
+	Tap           int32            `json:"tap"`
+	Hold          int32            `json:"hold"`
+	Slide         int32            `json:"slide"`
+	Touch         int32            `json:"touch"`
+	Break         int32            `json:"break"`
+	NoteDesigner  string           `json:"noteDesigner"`
+	MaxDxScore    int32            `json:"maxDxScore"`
+	UpdatedAt     pgtype.Timestamp `json:"updatedAt"`
+	CreatedAt     pgtype.Timestamp `json:"createdAt"`
 }
 
 type Score struct {
-	ScoreID       uuid.UUID
-	BeatmapID     uuid.UUID
-	SongID        uuid.UUID
-	UserID        uuid.UUID
-	Accuracy      string
-	MaxCombo      int32
-	DxScore       int32
-	TapCritical   int32
-	TapPerfect    int32
-	TapGreat      int32
-	TapGood       int32
-	TapMiss       int32
-	HoldCritical  int32
-	HoldPerfect   int32
-	HoldGreat     int32
-	HoldGood      int32
-	HoldMiss      int32
-	SlideCritical int32
-	SlidePerfect  int32
-	SlideGreat    int32
-	SlideGood     int32
-	SlideMiss     int32
-	TouchCritical int32
-	TouchPerfect  int32
-	TouchGreat    int32
-	TouchGood     int32
-	TouchMiss     int32
-	BreakCritical int32
-	BreakPerfect  int32
-	BreakGreat    int32
-	BreakGood     int32
-	BreakMiss     int32
-	Fast          int32
-	Late          int32
-	PlayedAt      pgtype.Timestamp
-	CreatedAt     pgtype.Timestamp
+	ScoreID       uuid.UUID        `json:"scoreID"`
+	BeatmapID     uuid.UUID        `json:"beatmapID"`
+	SongID        uuid.UUID        `json:"songID"`
+	UserID        uuid.UUID        `json:"userID"`
+	Accuracy      string           `json:"accuracy"`
+	MaxCombo      int32            `json:"maxCombo"`
+	DxScore       int32            `json:"dxScore"`
+	TapCritical   int32            `json:"tapCritical"`
+	TapPerfect    int32            `json:"tapPerfect"`
+	TapGreat      int32            `json:"tapGreat"`
+	TapGood       int32            `json:"tapGood"`
+	TapMiss       int32            `json:"tapMiss"`
+	HoldCritical  int32            `json:"holdCritical"`
+	HoldPerfect   int32            `json:"holdPerfect"`
+	HoldGreat     int32            `json:"holdGreat"`
+	HoldGood      int32            `json:"holdGood"`
+	HoldMiss      int32            `json:"holdMiss"`
+	SlideCritical int32            `json:"slideCritical"`
+	SlidePerfect  int32            `json:"slidePerfect"`
+	SlideGreat    int32            `json:"slideGreat"`
+	SlideGood     int32            `json:"slideGood"`
+	SlideMiss     int32            `json:"slideMiss"`
+	TouchCritical int32            `json:"touchCritical"`
+	TouchPerfect  int32            `json:"touchPerfect"`
+	TouchGreat    int32            `json:"touchGreat"`
+	TouchGood     int32            `json:"touchGood"`
+	TouchMiss     int32            `json:"touchMiss"`
+	BreakCritical int32            `json:"breakCritical"`
+	BreakPerfect  int32            `json:"breakPerfect"`
+	BreakGreat    int32            `json:"breakGreat"`
+	BreakGood     int32            `json:"breakGood"`
+	BreakMiss     int32            `json:"breakMiss"`
+	Fast          int32            `json:"fast"`
+	Late          int32            `json:"late"`
+	PlayedAt      pgtype.Timestamp `json:"playedAt"`
+	CreatedAt     pgtype.Timestamp `json:"createdAt"`
 }
 
 type Song struct {
-	SongID      uuid.UUID
-	AltKey      string
-	Title       string
-	Artist      string
-	Genre       string
-	Bpm         string
-	ImageUrl    string
-	Version     string
-	IsUtage     bool
-	IsAvailable bool
-	ReleaseDate pgtype.Date
-	DeleteDate  pgtype.Date
-	UpdatedAt   pgtype.Timestamp
-	CreatedAt   pgtype.Timestamp
+	SongID      uuid.UUID        `json:"songID"`
+	AltKey      string           `json:"altKey"`
+	Title       string           `json:"title"`
+	Artist      string           `json:"artist"`
+	Genre       string           `json:"genre"`
+	Bpm         string           `json:"bpm"`
+	ImageUrl    string           `json:"imageUrl"`
+	Version     string           `json:"version"`
+	IsUtage     bool             `json:"isUtage"`
+	IsAvailable bool             `json:"isAvailable"`
+	ReleaseDate pgtype.Date      `json:"releaseDate"`
+	DeleteDate  pgtype.Date      `json:"deleteDate"`
+	UpdatedAt   pgtype.Timestamp `json:"updatedAt"`
+	CreatedAt   pgtype.Timestamp `json:"createdAt"`
 }
 
 type User struct {
-	UserID       uuid.UUID
-	Username     string
-	Password     string
-	SegaID       string
-	SegaPassword string
-	GameName     string
-	TagLine      string
-	UpdatedAt    pgtype.Timestamp
-	CreatedAt    pgtype.Timestamp
+	UserID       uuid.UUID        `json:"userID"`
+	Username     string           `json:"username"`
+	Password     string           `json:"password"`
+	SegaID       string           `json:"segaID"`
+	SegaPassword string           `json:"segaPassword"`
+	GameName     string           `json:"gameName"`
+	TagLine      string           `json:"tagLine"`
+	UpdatedAt    pgtype.Timestamp `json:"updatedAt"`
+	CreatedAt    pgtype.Timestamp `json:"createdAt"`
 }
 
 type UserDatum struct {
-	ID              uuid.UUID
-	UserID          uuid.UUID
-	GameName        string
-	TagLine         string
-	Rating          int32
-	SeasonPlayCount int32
-	TotalPlayCount  int32
-	CreatedAt       pgtype.Timestamp
+	ID              uuid.UUID        `json:"id"`
+	UserID          uuid.UUID        `json:"userID"`
+	GameName        string           `json:"gameName"`
+	TagLine         string           `json:"tagLine"`
+	Rating          int32            `json:"rating"`
+	SeasonPlayCount int32            `json:"seasonPlayCount"`
+	TotalPlayCount  int32            `json:"totalPlayCount"`
+	CreatedAt       pgtype.Timestamp `json:"createdAt"`
 }
 
 type UserMetadatum struct {
-	UserID       uuid.UUID
-	LastPlayedAt pgtype.Timestamp
-	UpdatedAt    pgtype.Timestamp
-	CreatedAt    pgtype.Timestamp
+	UserID       uuid.UUID        `json:"userID"`
+	LastPlayedAt pgtype.Timestamp `json:"lastPlayedAt"`
+	UpdatedAt    pgtype.Timestamp `json:"updatedAt"`
+	CreatedAt    pgtype.Timestamp `json:"createdAt"`
 }

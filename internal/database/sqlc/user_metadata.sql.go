@@ -24,8 +24,8 @@ returning user_id, last_played_at, updated_at, created_at
 `
 
 type CreateUserMetadataParams struct {
-	UserID       uuid.UUID
-	LastPlayedAt pgtype.Timestamp
+	UserID       uuid.UUID        `json:"userID"`
+	LastPlayedAt pgtype.Timestamp `json:"lastPlayedAt"`
 }
 
 func (q *Queries) CreateUserMetadata(ctx context.Context, arg CreateUserMetadataParams) (UserMetadatum, error) {
@@ -72,8 +72,8 @@ returning user_id, last_played_at, updated_at, created_at
 `
 
 type UpdateUserMetadataParams struct {
-	UserID       uuid.UUID
-	LastPlayedAt pgtype.Timestamp
+	UserID       uuid.UUID        `json:"userID"`
+	LastPlayedAt pgtype.Timestamp `json:"lastPlayedAt"`
 }
 
 func (q *Queries) UpdateUserMetadata(ctx context.Context, arg UpdateUserMetadataParams) (UserMetadatum, error) {

@@ -64,41 +64,41 @@ returning score_id, beatmap_id, song_id, user_id, accuracy, max_combo, dx_score,
 `
 
 type CreateScoreParams struct {
-	ScoreID       uuid.UUID
-	BeatmapID     uuid.UUID
-	SongID        uuid.UUID
-	UserID        uuid.UUID
-	Accuracy      string
-	MaxCombo      int32
-	DxScore       int32
-	TapCritical   int32
-	TapPerfect    int32
-	TapGreat      int32
-	TapGood       int32
-	TapMiss       int32
-	HoldCritical  int32
-	HoldPerfect   int32
-	HoldGreat     int32
-	HoldGood      int32
-	HoldMiss      int32
-	SlideCritical int32
-	SlidePerfect  int32
-	SlideGreat    int32
-	SlideGood     int32
-	SlideMiss     int32
-	TouchCritical int32
-	TouchPerfect  int32
-	TouchGreat    int32
-	TouchGood     int32
-	TouchMiss     int32
-	BreakCritical int32
-	BreakPerfect  int32
-	BreakGreat    int32
-	BreakGood     int32
-	BreakMiss     int32
-	Fast          int32
-	Late          int32
-	PlayedAt      pgtype.Timestamp
+	ScoreID       uuid.UUID        `json:"scoreID"`
+	BeatmapID     uuid.UUID        `json:"beatmapID"`
+	SongID        uuid.UUID        `json:"songID"`
+	UserID        uuid.UUID        `json:"userID"`
+	Accuracy      string           `json:"accuracy"`
+	MaxCombo      int32            `json:"maxCombo"`
+	DxScore       int32            `json:"dxScore"`
+	TapCritical   int32            `json:"tapCritical"`
+	TapPerfect    int32            `json:"tapPerfect"`
+	TapGreat      int32            `json:"tapGreat"`
+	TapGood       int32            `json:"tapGood"`
+	TapMiss       int32            `json:"tapMiss"`
+	HoldCritical  int32            `json:"holdCritical"`
+	HoldPerfect   int32            `json:"holdPerfect"`
+	HoldGreat     int32            `json:"holdGreat"`
+	HoldGood      int32            `json:"holdGood"`
+	HoldMiss      int32            `json:"holdMiss"`
+	SlideCritical int32            `json:"slideCritical"`
+	SlidePerfect  int32            `json:"slidePerfect"`
+	SlideGreat    int32            `json:"slideGreat"`
+	SlideGood     int32            `json:"slideGood"`
+	SlideMiss     int32            `json:"slideMiss"`
+	TouchCritical int32            `json:"touchCritical"`
+	TouchPerfect  int32            `json:"touchPerfect"`
+	TouchGreat    int32            `json:"touchGreat"`
+	TouchGood     int32            `json:"touchGood"`
+	TouchMiss     int32            `json:"touchMiss"`
+	BreakCritical int32            `json:"breakCritical"`
+	BreakPerfect  int32            `json:"breakPerfect"`
+	BreakGreat    int32            `json:"breakGreat"`
+	BreakGood     int32            `json:"breakGood"`
+	BreakMiss     int32            `json:"breakMiss"`
+	Fast          int32            `json:"fast"`
+	Late          int32            `json:"late"`
+	PlayedAt      pgtype.Timestamp `json:"playedAt"`
 }
 
 func (q *Queries) CreateScore(ctx context.Context, arg CreateScoreParams) (Score, error) {
@@ -181,199 +181,108 @@ func (q *Queries) CreateScore(ctx context.Context, arg CreateScoreParams) (Score
 	return i, err
 }
 
-const deleteScore = `-- name: DeleteScore :one
-delete from scores
-where score_id = $1
-returning score_id, beatmap_id, song_id, user_id, accuracy, max_combo, dx_score, tap_critical, tap_perfect, tap_great, tap_good, tap_miss, hold_critical, hold_perfect, hold_great, hold_good, hold_miss, slide_critical, slide_perfect, slide_great, slide_good, slide_miss, touch_critical, touch_perfect, touch_great, touch_good, touch_miss, break_critical, break_perfect, break_great, break_good, break_miss, fast, late, played_at, created_at
-`
-
-func (q *Queries) DeleteScore(ctx context.Context, scoreID uuid.UUID) (Score, error) {
-	row := q.db.QueryRow(ctx, deleteScore, scoreID)
-	var i Score
-	err := row.Scan(
-		&i.ScoreID,
-		&i.BeatmapID,
-		&i.SongID,
-		&i.UserID,
-		&i.Accuracy,
-		&i.MaxCombo,
-		&i.DxScore,
-		&i.TapCritical,
-		&i.TapPerfect,
-		&i.TapGreat,
-		&i.TapGood,
-		&i.TapMiss,
-		&i.HoldCritical,
-		&i.HoldPerfect,
-		&i.HoldGreat,
-		&i.HoldGood,
-		&i.HoldMiss,
-		&i.SlideCritical,
-		&i.SlidePerfect,
-		&i.SlideGreat,
-		&i.SlideGood,
-		&i.SlideMiss,
-		&i.TouchCritical,
-		&i.TouchPerfect,
-		&i.TouchGreat,
-		&i.TouchGood,
-		&i.TouchMiss,
-		&i.BreakCritical,
-		&i.BreakPerfect,
-		&i.BreakGreat,
-		&i.BreakGood,
-		&i.BreakMiss,
-		&i.Fast,
-		&i.Late,
-		&i.PlayedAt,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
-const getAllScores = `-- name: GetAllScores :many
-select
-    score_id,
-    beatmap_id,
-    song_id,
-    user_id,
-    accuracy,
-    max_combo,
-    dx_score,
-    tap_critical,
-    tap_perfect,
-    tap_great,
-    tap_good,
-    tap_miss,
-    hold_critical,
-    hold_perfect,
-    hold_great,
-    hold_good,
-    hold_miss,
-    slide_critical,
-    slide_perfect,
-    slide_great,
-    slide_good,
-    slide_miss,
-    touch_critical,
-    touch_perfect,
-    touch_great,
-    touch_good,
-    touch_miss,
-    break_critical,
-    break_perfect,
-    break_great,
-    break_good,
-    break_miss,
-    fast,
-    late,
-    played_at,
-    created_at
-from scores
-`
-
-func (q *Queries) GetAllScores(ctx context.Context) ([]Score, error) {
-	rows, err := q.db.Query(ctx, getAllScores)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Score
-	for rows.Next() {
-		var i Score
-		if err := rows.Scan(
-			&i.ScoreID,
-			&i.BeatmapID,
-			&i.SongID,
-			&i.UserID,
-			&i.Accuracy,
-			&i.MaxCombo,
-			&i.DxScore,
-			&i.TapCritical,
-			&i.TapPerfect,
-			&i.TapGreat,
-			&i.TapGood,
-			&i.TapMiss,
-			&i.HoldCritical,
-			&i.HoldPerfect,
-			&i.HoldGreat,
-			&i.HoldGood,
-			&i.HoldMiss,
-			&i.SlideCritical,
-			&i.SlidePerfect,
-			&i.SlideGreat,
-			&i.SlideGood,
-			&i.SlideMiss,
-			&i.TouchCritical,
-			&i.TouchPerfect,
-			&i.TouchGreat,
-			&i.TouchGood,
-			&i.TouchMiss,
-			&i.BreakCritical,
-			&i.BreakPerfect,
-			&i.BreakGreat,
-			&i.BreakGood,
-			&i.BreakMiss,
-			&i.Fast,
-			&i.Late,
-			&i.PlayedAt,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getScoreByID = `-- name: GetScoreByID :one
 select
-    score_id,
-    beatmap_id,
-    song_id,
-    user_id,
-    accuracy,
-    max_combo,
-    dx_score,
-    tap_critical,
-    tap_perfect,
-    tap_great,
-    tap_good,
-    tap_miss,
-    hold_critical,
-    hold_perfect,
-    hold_great,
-    hold_good,
-    hold_miss,
-    slide_critical,
-    slide_perfect,
-    slide_great,
-    slide_good,
-    slide_miss,
-    touch_critical,
-    touch_perfect,
-    touch_great,
-    touch_good,
-    touch_miss,
-    break_critical,
-    break_perfect,
-    break_great,
-    break_good,
-    break_miss,
-    fast,
-    late,
-    played_at,
-    created_at
+    scores.score_id,
+    scores.beatmap_id,
+    scores.song_id,
+    scores.user_id,
+    scores.accuracy,
+    scores.max_combo,
+    scores.dx_score,
+    scores.tap_critical,
+    scores.tap_perfect,
+    scores.tap_great,
+    scores.tap_good,
+    scores.tap_miss,
+    scores.hold_critical,
+    scores.hold_perfect,
+    scores.hold_great,
+    scores.hold_good,
+    scores.hold_miss,
+    scores.slide_critical,
+    scores.slide_perfect,
+    scores.slide_great,
+    scores.slide_good,
+    scores.slide_miss,
+    scores.touch_critical,
+    scores.touch_perfect,
+    scores.touch_great,
+    scores.touch_good,
+    scores.touch_miss,
+    scores.break_critical,
+    scores.break_perfect,
+    scores.break_great,
+    scores.break_good,
+    scores.break_miss,
+    scores.fast,
+    scores.late,
+    scores.played_at,
+    songs.title,
+    songs.artist,
+    songs.genre,
+    songs.image_url,
+    songs.version,
+    beatmaps.difficulty,
+    beatmaps.level,
+    beatmaps.internal_level,
+    beatmaps.type
 from scores
-where score_id = $1
+inner join songs on scores.song_id = songs.song_id
+inner join beatmaps on scores.beatmap_id = beatmaps.beatmap_id
+where scores.score_id = $1
 `
 
-func (q *Queries) GetScoreByID(ctx context.Context, scoreID uuid.UUID) (Score, error) {
+type GetScoreByIDRow struct {
+	ScoreID       uuid.UUID        `json:"scoreID"`
+	BeatmapID     uuid.UUID        `json:"beatmapID"`
+	SongID        uuid.UUID        `json:"songID"`
+	UserID        uuid.UUID        `json:"userID"`
+	Accuracy      string           `json:"accuracy"`
+	MaxCombo      int32            `json:"maxCombo"`
+	DxScore       int32            `json:"dxScore"`
+	TapCritical   int32            `json:"tapCritical"`
+	TapPerfect    int32            `json:"tapPerfect"`
+	TapGreat      int32            `json:"tapGreat"`
+	TapGood       int32            `json:"tapGood"`
+	TapMiss       int32            `json:"tapMiss"`
+	HoldCritical  int32            `json:"holdCritical"`
+	HoldPerfect   int32            `json:"holdPerfect"`
+	HoldGreat     int32            `json:"holdGreat"`
+	HoldGood      int32            `json:"holdGood"`
+	HoldMiss      int32            `json:"holdMiss"`
+	SlideCritical int32            `json:"slideCritical"`
+	SlidePerfect  int32            `json:"slidePerfect"`
+	SlideGreat    int32            `json:"slideGreat"`
+	SlideGood     int32            `json:"slideGood"`
+	SlideMiss     int32            `json:"slideMiss"`
+	TouchCritical int32            `json:"touchCritical"`
+	TouchPerfect  int32            `json:"touchPerfect"`
+	TouchGreat    int32            `json:"touchGreat"`
+	TouchGood     int32            `json:"touchGood"`
+	TouchMiss     int32            `json:"touchMiss"`
+	BreakCritical int32            `json:"breakCritical"`
+	BreakPerfect  int32            `json:"breakPerfect"`
+	BreakGreat    int32            `json:"breakGreat"`
+	BreakGood     int32            `json:"breakGood"`
+	BreakMiss     int32            `json:"breakMiss"`
+	Fast          int32            `json:"fast"`
+	Late          int32            `json:"late"`
+	PlayedAt      pgtype.Timestamp `json:"playedAt"`
+	Title         string           `json:"title"`
+	Artist        string           `json:"artist"`
+	Genre         string           `json:"genre"`
+	ImageUrl      string           `json:"imageUrl"`
+	Version       string           `json:"version"`
+	Difficulty    string           `json:"difficulty"`
+	Level         string           `json:"level"`
+	InternalLevel pgtype.Numeric   `json:"internalLevel"`
+	Type          string           `json:"type"`
+}
+
+func (q *Queries) GetScoreByID(ctx context.Context, scoreID uuid.UUID) (GetScoreByIDRow, error) {
 	row := q.db.QueryRow(ctx, getScoreByID, scoreID)
-	var i Score
+	var i GetScoreByIDRow
 	err := row.Scan(
 		&i.ScoreID,
 		&i.BeatmapID,
@@ -410,32 +319,133 @@ func (q *Queries) GetScoreByID(ctx context.Context, scoreID uuid.UUID) (Score, e
 		&i.Fast,
 		&i.Late,
 		&i.PlayedAt,
-		&i.CreatedAt,
+		&i.Title,
+		&i.Artist,
+		&i.Genre,
+		&i.ImageUrl,
+		&i.Version,
+		&i.Difficulty,
+		&i.Level,
+		&i.InternalLevel,
+		&i.Type,
 	)
 	return i, err
 }
 
 const getScoreByMaiID = `-- name: GetScoreByMaiID :many
-select scores.score_id, scores.beatmap_id, scores.song_id, scores.user_id, scores.accuracy, scores.max_combo, scores.dx_score, scores.tap_critical, scores.tap_perfect, scores.tap_great, scores.tap_good, scores.tap_miss, scores.hold_critical, scores.hold_perfect, scores.hold_great, scores.hold_good, scores.hold_miss, scores.slide_critical, scores.slide_perfect, scores.slide_great, scores.slide_good, scores.slide_miss, scores.touch_critical, scores.touch_perfect, scores.touch_great, scores.touch_good, scores.touch_miss, scores.break_critical, scores.break_perfect, scores.break_great, scores.break_good, scores.break_miss, scores.fast, scores.late, scores.played_at, scores.created_at
+select
+    scores.score_id,
+    scores.beatmap_id,
+    scores.song_id,
+    scores.user_id,
+    scores.accuracy,
+    scores.max_combo,
+    scores.dx_score,
+    scores.tap_critical,
+    scores.tap_perfect,
+    scores.tap_great,
+    scores.tap_good,
+    scores.tap_miss,
+    scores.hold_critical,
+    scores.hold_perfect,
+    scores.hold_great,
+    scores.hold_good,
+    scores.hold_miss,
+    scores.slide_critical,
+    scores.slide_perfect,
+    scores.slide_great,
+    scores.slide_good,
+    scores.slide_miss,
+    scores.touch_critical,
+    scores.touch_perfect,
+    scores.touch_great,
+    scores.touch_good,
+    scores.touch_miss,
+    scores.break_critical,
+    scores.break_perfect,
+    scores.break_great,
+    scores.break_good,
+    scores.break_miss,
+    scores.fast,
+    scores.late,
+    scores.played_at,
+    songs.title,
+    songs.artist,
+    songs.genre,
+    songs.image_url,
+    songs.version,
+    beatmaps.difficulty,
+    beatmaps.level,
+    beatmaps.internal_level,
+    beatmaps.type
 from scores
+inner join songs on scores.song_id = songs.song_id
+inner join beatmaps on scores.beatmap_id = beatmaps.beatmap_id
 inner join users on scores.user_id = users.user_id
 where users.game_name = $1 and users.tag_line = $2
 `
 
 type GetScoreByMaiIDParams struct {
-	GameName string
-	TagLine  string
+	GameName string `json:"gameName"`
+	TagLine  string `json:"tagLine"`
 }
 
-func (q *Queries) GetScoreByMaiID(ctx context.Context, arg GetScoreByMaiIDParams) ([]Score, error) {
+type GetScoreByMaiIDRow struct {
+	ScoreID       uuid.UUID        `json:"scoreID"`
+	BeatmapID     uuid.UUID        `json:"beatmapID"`
+	SongID        uuid.UUID        `json:"songID"`
+	UserID        uuid.UUID        `json:"userID"`
+	Accuracy      string           `json:"accuracy"`
+	MaxCombo      int32            `json:"maxCombo"`
+	DxScore       int32            `json:"dxScore"`
+	TapCritical   int32            `json:"tapCritical"`
+	TapPerfect    int32            `json:"tapPerfect"`
+	TapGreat      int32            `json:"tapGreat"`
+	TapGood       int32            `json:"tapGood"`
+	TapMiss       int32            `json:"tapMiss"`
+	HoldCritical  int32            `json:"holdCritical"`
+	HoldPerfect   int32            `json:"holdPerfect"`
+	HoldGreat     int32            `json:"holdGreat"`
+	HoldGood      int32            `json:"holdGood"`
+	HoldMiss      int32            `json:"holdMiss"`
+	SlideCritical int32            `json:"slideCritical"`
+	SlidePerfect  int32            `json:"slidePerfect"`
+	SlideGreat    int32            `json:"slideGreat"`
+	SlideGood     int32            `json:"slideGood"`
+	SlideMiss     int32            `json:"slideMiss"`
+	TouchCritical int32            `json:"touchCritical"`
+	TouchPerfect  int32            `json:"touchPerfect"`
+	TouchGreat    int32            `json:"touchGreat"`
+	TouchGood     int32            `json:"touchGood"`
+	TouchMiss     int32            `json:"touchMiss"`
+	BreakCritical int32            `json:"breakCritical"`
+	BreakPerfect  int32            `json:"breakPerfect"`
+	BreakGreat    int32            `json:"breakGreat"`
+	BreakGood     int32            `json:"breakGood"`
+	BreakMiss     int32            `json:"breakMiss"`
+	Fast          int32            `json:"fast"`
+	Late          int32            `json:"late"`
+	PlayedAt      pgtype.Timestamp `json:"playedAt"`
+	Title         string           `json:"title"`
+	Artist        string           `json:"artist"`
+	Genre         string           `json:"genre"`
+	ImageUrl      string           `json:"imageUrl"`
+	Version       string           `json:"version"`
+	Difficulty    string           `json:"difficulty"`
+	Level         string           `json:"level"`
+	InternalLevel pgtype.Numeric   `json:"internalLevel"`
+	Type          string           `json:"type"`
+}
+
+func (q *Queries) GetScoreByMaiID(ctx context.Context, arg GetScoreByMaiIDParams) ([]GetScoreByMaiIDRow, error) {
 	rows, err := q.db.Query(ctx, getScoreByMaiID, arg.GameName, arg.TagLine)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Score
+	var items []GetScoreByMaiIDRow
 	for rows.Next() {
-		var i Score
+		var i GetScoreByMaiIDRow
 		if err := rows.Scan(
 			&i.ScoreID,
 			&i.BeatmapID,
@@ -472,7 +482,15 @@ func (q *Queries) GetScoreByMaiID(ctx context.Context, arg GetScoreByMaiIDParams
 			&i.Fast,
 			&i.Late,
 			&i.PlayedAt,
-			&i.CreatedAt,
+			&i.Title,
+			&i.Artist,
+			&i.Genre,
+			&i.ImageUrl,
+			&i.Version,
+			&i.Difficulty,
+			&i.Level,
+			&i.InternalLevel,
+			&i.Type,
 		); err != nil {
 			return nil, err
 		}
@@ -486,55 +504,112 @@ func (q *Queries) GetScoreByMaiID(ctx context.Context, arg GetScoreByMaiIDParams
 
 const getScoreByUserID = `-- name: GetScoreByUserID :many
 select
-    score_id,
-    beatmap_id,
-    song_id,
-    user_id,
-    accuracy,
-    max_combo,
-    dx_score,
-    tap_critical,
-    tap_perfect,
-    tap_great,
-    tap_good,
-    tap_miss,
-    hold_critical,
-    hold_perfect,
-    hold_great,
-    hold_good,
-    hold_miss,
-    slide_critical,
-    slide_perfect,
-    slide_great,
-    slide_good,
-    slide_miss,
-    touch_critical,
-    touch_perfect,
-    touch_great,
-    touch_good,
-    touch_miss,
-    break_critical,
-    break_perfect,
-    break_great,
-    break_good,
-    break_miss,
-    fast,
-    late,
-    played_at,
-    created_at
+    scores.score_id,
+    scores.beatmap_id,
+    scores.song_id,
+    scores.user_id,
+    scores.accuracy,
+    scores.max_combo,
+    scores.dx_score,
+    scores.tap_critical,
+    scores.tap_perfect,
+    scores.tap_great,
+    scores.tap_good,
+    scores.tap_miss,
+    scores.hold_critical,
+    scores.hold_perfect,
+    scores.hold_great,
+    scores.hold_good,
+    scores.hold_miss,
+    scores.slide_critical,
+    scores.slide_perfect,
+    scores.slide_great,
+    scores.slide_good,
+    scores.slide_miss,
+    scores.touch_critical,
+    scores.touch_perfect,
+    scores.touch_great,
+    scores.touch_good,
+    scores.touch_miss,
+    scores.break_critical,
+    scores.break_perfect,
+    scores.break_great,
+    scores.break_good,
+    scores.break_miss,
+    scores.fast,
+    scores.late,
+    scores.played_at,
+    songs.title,
+    songs.artist,
+    songs.genre,
+    songs.image_url,
+    songs.version,
+    beatmaps.difficulty,
+    beatmaps.level,
+    beatmaps.internal_level,
+    beatmaps.type
 from scores
-where user_id = $1
+inner join songs on scores.song_id = songs.song_id
+inner join beatmaps on scores.beatmap_id = beatmaps.beatmap_id
+where scores.user_id = $1
 `
 
-func (q *Queries) GetScoreByUserID(ctx context.Context, userID uuid.UUID) ([]Score, error) {
+type GetScoreByUserIDRow struct {
+	ScoreID       uuid.UUID        `json:"scoreID"`
+	BeatmapID     uuid.UUID        `json:"beatmapID"`
+	SongID        uuid.UUID        `json:"songID"`
+	UserID        uuid.UUID        `json:"userID"`
+	Accuracy      string           `json:"accuracy"`
+	MaxCombo      int32            `json:"maxCombo"`
+	DxScore       int32            `json:"dxScore"`
+	TapCritical   int32            `json:"tapCritical"`
+	TapPerfect    int32            `json:"tapPerfect"`
+	TapGreat      int32            `json:"tapGreat"`
+	TapGood       int32            `json:"tapGood"`
+	TapMiss       int32            `json:"tapMiss"`
+	HoldCritical  int32            `json:"holdCritical"`
+	HoldPerfect   int32            `json:"holdPerfect"`
+	HoldGreat     int32            `json:"holdGreat"`
+	HoldGood      int32            `json:"holdGood"`
+	HoldMiss      int32            `json:"holdMiss"`
+	SlideCritical int32            `json:"slideCritical"`
+	SlidePerfect  int32            `json:"slidePerfect"`
+	SlideGreat    int32            `json:"slideGreat"`
+	SlideGood     int32            `json:"slideGood"`
+	SlideMiss     int32            `json:"slideMiss"`
+	TouchCritical int32            `json:"touchCritical"`
+	TouchPerfect  int32            `json:"touchPerfect"`
+	TouchGreat    int32            `json:"touchGreat"`
+	TouchGood     int32            `json:"touchGood"`
+	TouchMiss     int32            `json:"touchMiss"`
+	BreakCritical int32            `json:"breakCritical"`
+	BreakPerfect  int32            `json:"breakPerfect"`
+	BreakGreat    int32            `json:"breakGreat"`
+	BreakGood     int32            `json:"breakGood"`
+	BreakMiss     int32            `json:"breakMiss"`
+	Fast          int32            `json:"fast"`
+	Late          int32            `json:"late"`
+	PlayedAt      pgtype.Timestamp `json:"playedAt"`
+	Title         string           `json:"title"`
+	Artist        string           `json:"artist"`
+	Genre         string           `json:"genre"`
+	ImageUrl      string           `json:"imageUrl"`
+	Version       string           `json:"version"`
+	Difficulty    string           `json:"difficulty"`
+	Level         string           `json:"level"`
+	InternalLevel pgtype.Numeric   `json:"internalLevel"`
+	Type          string           `json:"type"`
+}
+
+func (q *Queries) GetScoreByUserID(ctx context.Context, userID uuid.UUID) ([]GetScoreByUserIDRow, error) {
 	rows, err := q.db.Query(ctx, getScoreByUserID, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Score
+	var items []GetScoreByUserIDRow
 	for rows.Next() {
-		var i Score
+		var i GetScoreByUserIDRow
 		if err := rows.Scan(
 			&i.ScoreID,
 			&i.BeatmapID,
@@ -571,7 +646,15 @@ func (q *Queries) GetScoreByUserID(ctx context.Context, userID uuid.UUID) ([]Sco
 			&i.Fast,
 			&i.Late,
 			&i.PlayedAt,
-			&i.CreatedAt,
+			&i.Title,
+			&i.Artist,
+			&i.Genre,
+			&i.ImageUrl,
+			&i.Version,
+			&i.Difficulty,
+			&i.Level,
+			&i.InternalLevel,
+			&i.Type,
 		); err != nil {
 			return nil, err
 		}
@@ -581,154 +664,4 @@ func (q *Queries) GetScoreByUserID(ctx context.Context, userID uuid.UUID) ([]Sco
 		return nil, err
 	}
 	return items, nil
-}
-
-const updateScore = `-- name: UpdateScore :one
-update scores
-set
-    accuracy = $2,
-    max_combo = $3,
-    dx_score = $4,
-    tap_critical = $5,
-    tap_perfect = $6,
-    tap_great = $7,
-    tap_good = $8,
-    tap_miss = $9,
-    hold_critical = $10,
-    hold_perfect = $11,
-    hold_great = $12,
-    hold_good = $13,
-    hold_miss = $14,
-    slide_critical = $15,
-    slide_perfect = $16,
-    slide_great = $17,
-    slide_good = $18,
-    slide_miss = $19,
-    touch_critical = $20,
-    touch_perfect = $21,
-    touch_great = $22,
-    touch_good = $23,
-    touch_miss = $24,
-    break_critical = $25,
-    break_perfect = $26,
-    break_great = $27,
-    break_good = $28,
-    break_miss = $29,
-    fast = $30,
-    late = $31,
-    played_at = $32
-where score_id = $1
-returning score_id, beatmap_id, song_id, user_id, accuracy, max_combo, dx_score, tap_critical, tap_perfect, tap_great, tap_good, tap_miss, hold_critical, hold_perfect, hold_great, hold_good, hold_miss, slide_critical, slide_perfect, slide_great, slide_good, slide_miss, touch_critical, touch_perfect, touch_great, touch_good, touch_miss, break_critical, break_perfect, break_great, break_good, break_miss, fast, late, played_at, created_at
-`
-
-type UpdateScoreParams struct {
-	ScoreID       uuid.UUID
-	Accuracy      string
-	MaxCombo      int32
-	DxScore       int32
-	TapCritical   int32
-	TapPerfect    int32
-	TapGreat      int32
-	TapGood       int32
-	TapMiss       int32
-	HoldCritical  int32
-	HoldPerfect   int32
-	HoldGreat     int32
-	HoldGood      int32
-	HoldMiss      int32
-	SlideCritical int32
-	SlidePerfect  int32
-	SlideGreat    int32
-	SlideGood     int32
-	SlideMiss     int32
-	TouchCritical int32
-	TouchPerfect  int32
-	TouchGreat    int32
-	TouchGood     int32
-	TouchMiss     int32
-	BreakCritical int32
-	BreakPerfect  int32
-	BreakGreat    int32
-	BreakGood     int32
-	BreakMiss     int32
-	Fast          int32
-	Late          int32
-	PlayedAt      pgtype.Timestamp
-}
-
-func (q *Queries) UpdateScore(ctx context.Context, arg UpdateScoreParams) (Score, error) {
-	row := q.db.QueryRow(ctx, updateScore,
-		arg.ScoreID,
-		arg.Accuracy,
-		arg.MaxCombo,
-		arg.DxScore,
-		arg.TapCritical,
-		arg.TapPerfect,
-		arg.TapGreat,
-		arg.TapGood,
-		arg.TapMiss,
-		arg.HoldCritical,
-		arg.HoldPerfect,
-		arg.HoldGreat,
-		arg.HoldGood,
-		arg.HoldMiss,
-		arg.SlideCritical,
-		arg.SlidePerfect,
-		arg.SlideGreat,
-		arg.SlideGood,
-		arg.SlideMiss,
-		arg.TouchCritical,
-		arg.TouchPerfect,
-		arg.TouchGreat,
-		arg.TouchGood,
-		arg.TouchMiss,
-		arg.BreakCritical,
-		arg.BreakPerfect,
-		arg.BreakGreat,
-		arg.BreakGood,
-		arg.BreakMiss,
-		arg.Fast,
-		arg.Late,
-		arg.PlayedAt,
-	)
-	var i Score
-	err := row.Scan(
-		&i.ScoreID,
-		&i.BeatmapID,
-		&i.SongID,
-		&i.UserID,
-		&i.Accuracy,
-		&i.MaxCombo,
-		&i.DxScore,
-		&i.TapCritical,
-		&i.TapPerfect,
-		&i.TapGreat,
-		&i.TapGood,
-		&i.TapMiss,
-		&i.HoldCritical,
-		&i.HoldPerfect,
-		&i.HoldGreat,
-		&i.HoldGood,
-		&i.HoldMiss,
-		&i.SlideCritical,
-		&i.SlidePerfect,
-		&i.SlideGreat,
-		&i.SlideGood,
-		&i.SlideMiss,
-		&i.TouchCritical,
-		&i.TouchPerfect,
-		&i.TouchGreat,
-		&i.TouchGood,
-		&i.TouchMiss,
-		&i.BreakCritical,
-		&i.BreakPerfect,
-		&i.BreakGreat,
-		&i.BreakGood,
-		&i.BreakMiss,
-		&i.Fast,
-		&i.Late,
-		&i.PlayedAt,
-		&i.CreatedAt,
-	)
-	return i, err
 }

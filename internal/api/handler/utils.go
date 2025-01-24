@@ -15,7 +15,7 @@ func ifNotNil[T any](v *T, fallback T) T {
 	return *v
 }
 
-func DecodeMaiID(maiID string) (gameName, tagLine string, err error) {
+func decodeMaiID(maiID string) (gameName, tagLine string, err error) {
 	parts := strings.Split(maiID, "-")
 	if len(parts) < 2 {
 		return "", "", fmt.Errorf("invalid maiID format")

@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/asashakira/mai.gg/internal/api/model"
 	database "github.com/asashakira/mai.gg/internal/database/sqlc"
 	"github.com/asashakira/mai.gg/utils"
 	"github.com/go-chi/chi/v5"
@@ -36,11 +35,6 @@ func (h *Handler) CreateSong(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, 400, fmt.Sprintf("error parsing JSON: %v", err))
-		return
-	}
-
-	if params.AltKey == "" {
-		respondWithError(w, 400, fmt.Sprintf("altkey not provided %v", err))
 		return
 	}
 
@@ -80,7 +74,7 @@ func (h *Handler) CreateSong(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, errorMessage)
 		return
 	}
-	respondWithJSON(w, 200, model.ConvertSong(song))
+	respondWithJSON(w, 200, song)
 }
 
 func (h *Handler) GetAllSongs(w http.ResponseWriter, r *http.Request) {
@@ -91,32 +85,7 @@ func (h *Handler) GetAllSongs(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, errorMessage)
 		return
 	}
-	respondWithJSON(w, 200, model.ConvertSongs(songs))
-}
-
-func (h *Handler) GetSongBySongID(w http.ResponseWriter, r *http.Request) {
-	id, err := uuid.Parse(chi.URLParam(r, "id"))
-	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("error parsing songID: %v", err))
-		return
-	}
-
-	song, err := h.queries.GetSongBySongID(r.Context(), id)
-	if err != nil {
-		// Handle "no rows found"
-		if errors.Is(err, pgx.ErrNoRows) {
-			errorMessage := fmt.Sprintf("No song found with provided songID: %s", err)
-			log.Println(errorMessage)
-			respondWithError(w, 404, errorMessage)
-			return
-		}
-		// Handle other errors
-		errorMessage := fmt.Sprintf("GetSongBySongID %v", err)
-		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
-		return
-	}
-	respondWithJSON(w, 200, model.ConvertSong(song))
+	respondWithJSON(w, 200, songs)
 }
 
 // get song using altkey
@@ -147,10 +116,10 @@ func (h *Handler) GetSongByAltKey(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, errorMessage)
 		return
 	}
-	respondWithJSON(w, 200, model.ConvertSong(song))
+	respondWithJSON(w, 200, song)
 }
 
-// may return multiple songs
+// return array of songs that matches title
 func (h *Handler) GetSongsByTitle(w http.ResponseWriter, r *http.Request) {
 	title := chi.URLParam(r, "title")
 	title, err := url.QueryUnescape(title)
@@ -174,7 +143,7 @@ func (h *Handler) GetSongsByTitle(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, errorMessage)
 		return
 	}
-	respondWithJSON(w, 200, model.ConvertSongs(songs))
+	respondWithJSON(w, 200, songs)
 }
 
 func (h *Handler) UpdateSong(w http.ResponseWriter, r *http.Request) {
@@ -252,5 +221,5 @@ func (h *Handler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, errorMessage)
 		return
 	}
-	respondWithJSON(w, 200, model.ConvertSong(updatedSong))
+	respondWithJSON(w, 200, updatedSong)
 }

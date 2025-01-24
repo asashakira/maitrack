@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/asashakira/mai.gg/internal/api/model"
 	database "github.com/asashakira/mai.gg/internal/database/sqlc"
 	"github.com/asashakira/mai.gg/utils"
 	"github.com/go-chi/chi/v5"
@@ -124,7 +123,7 @@ func (h *Handler) GetScoresByMaiID(w http.ResponseWriter, r *http.Request) {
 	maiID := chi.URLParam(r, "maiID")
 
 	// get gamename and tagline
-	gameName, tagLine, decodeMaiIDErr := DecodeMaiID(maiID)
+	gameName, tagLine, decodeMaiIDErr := decodeMaiID(maiID)
 	if decodeMaiIDErr != nil {
 		errorMessage := fmt.Sprintf("error decoding maiID %s", decodeMaiIDErr)
 		log.Println(errorMessage)
@@ -149,5 +148,5 @@ func (h *Handler) GetScoresByMaiID(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, errorMessage)
 		return
 	}
-	respondWithJSON(w, 200, model.ConvertScores(scores))
+	respondWithJSON(w, 200, scores)
 }

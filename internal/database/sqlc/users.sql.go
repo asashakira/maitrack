@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -28,13 +29,13 @@ returning user_id, username, password, sega_id, sega_password, game_name, tag_li
 `
 
 type CreateUserParams struct {
-	UserID       uuid.UUID
-	Username     string
-	Password     string
-	SegaID       string
-	SegaPassword string
-	GameName     string
-	TagLine      string
+	UserID       uuid.UUID `json:"userID"`
+	Username     string    `json:"username"`
+	Password     string    `json:"password"`
+	SegaID       string    `json:"segaID"`
+	SegaPassword string    `json:"segaPassword"`
+	GameName     string    `json:"gameName"`
+	TagLine      string    `json:"tagLine"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -63,19 +64,56 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getAllUsers = `-- name: GetAllUsers :many
-select user_id, username, password, sega_id, sega_password, game_name, tag_line, updated_at, created_at
+select
+    users.user_id,
+    users.username,
+    users.password,
+    users.sega_id,
+    users.sega_password,
+    users.game_name,
+    users.tag_line,
+    users.updated_at,
+    user_data.rating,
+    user_data.season_play_count,
+    user_data.total_play_count,
+    user_metadata.last_played_at
 from users
+inner join (
+    select distinct on (user_data.user_id)
+        user_data.user_id,
+        user_data.rating,
+        user_data.season_play_count,
+        user_data.total_play_count
+    from user_data
+    order by user_data.user_id asc, user_data.created_at desc
+) as user_data on users.user_id = user_data.user_id
+inner join user_metadata on users.user_id = user_metadata.user_id
 `
 
-func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
+type GetAllUsersRow struct {
+	UserID          uuid.UUID        `json:"userID"`
+	Username        string           `json:"username"`
+	Password        string           `json:"password"`
+	SegaID          string           `json:"segaID"`
+	SegaPassword    string           `json:"segaPassword"`
+	GameName        string           `json:"gameName"`
+	TagLine         string           `json:"tagLine"`
+	UpdatedAt       pgtype.Timestamp `json:"updatedAt"`
+	Rating          int32            `json:"rating"`
+	SeasonPlayCount int32            `json:"seasonPlayCount"`
+	TotalPlayCount  int32            `json:"totalPlayCount"`
+	LastPlayedAt    pgtype.Timestamp `json:"lastPlayedAt"`
+}
+
+func (q *Queries) GetAllUsers(ctx context.Context) ([]GetAllUsersRow, error) {
 	rows, err := q.db.Query(ctx, getAllUsers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []User
+	var items []GetAllUsersRow
 	for rows.Next() {
-		var i User
+		var i GetAllUsersRow
 		if err := rows.Scan(
 			&i.UserID,
 			&i.Username,
@@ -85,7 +123,10 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
 			&i.GameName,
 			&i.TagLine,
 			&i.UpdatedAt,
-			&i.CreatedAt,
+			&i.Rating,
+			&i.SeasonPlayCount,
+			&i.TotalPlayCount,
+			&i.LastPlayedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -99,22 +140,50 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
 
 const getUserByID = `-- name: GetUserByID :one
 select
-    user_id,
-    username,
-    password,
-    sega_id,
-    sega_password,
-    game_name,
-    tag_line,
-    updated_at,
-    created_at
+    users.user_id,
+    users.username,
+    users.password,
+    users.sega_id,
+    users.sega_password,
+    users.game_name,
+    users.tag_line,
+    users.updated_at,
+    user_data.rating,
+    user_data.season_play_count,
+    user_data.total_play_count,
+    user_metadata.last_played_at
 from users
-where user_id = $1
+inner join (
+    select distinct on (user_data.user_id)
+        user_data.user_id,
+        user_data.rating,
+        user_data.season_play_count,
+        user_data.total_play_count
+    from user_data
+    order by user_data.user_id asc, user_data.created_at desc
+) as user_data on users.user_id = user_data.user_id
+inner join user_metadata on users.user_id = user_metadata.user_id
+where users.user_id = $1
 `
 
-func (q *Queries) GetUserByID(ctx context.Context, userID uuid.UUID) (User, error) {
+type GetUserByIDRow struct {
+	UserID          uuid.UUID        `json:"userID"`
+	Username        string           `json:"username"`
+	Password        string           `json:"password"`
+	SegaID          string           `json:"segaID"`
+	SegaPassword    string           `json:"segaPassword"`
+	GameName        string           `json:"gameName"`
+	TagLine         string           `json:"tagLine"`
+	UpdatedAt       pgtype.Timestamp `json:"updatedAt"`
+	Rating          int32            `json:"rating"`
+	SeasonPlayCount int32            `json:"seasonPlayCount"`
+	TotalPlayCount  int32            `json:"totalPlayCount"`
+	LastPlayedAt    pgtype.Timestamp `json:"lastPlayedAt"`
+}
+
+func (q *Queries) GetUserByID(ctx context.Context, userID uuid.UUID) (GetUserByIDRow, error) {
 	row := q.db.QueryRow(ctx, getUserByID, userID)
-	var i User
+	var i GetUserByIDRow
 	err := row.Scan(
 		&i.UserID,
 		&i.Username,
@@ -124,66 +193,99 @@ func (q *Queries) GetUserByID(ctx context.Context, userID uuid.UUID) (User, erro
 		&i.GameName,
 		&i.TagLine,
 		&i.UpdatedAt,
-		&i.CreatedAt,
+		&i.Rating,
+		&i.SeasonPlayCount,
+		&i.TotalPlayCount,
+		&i.LastPlayedAt,
 	)
 	return i, err
 }
 
 const getUserByMaiID = `-- name: GetUserByMaiID :one
 select
-    user_id,
-    username,
-    password,
-    sega_id,
-    sega_password,
-    game_name,
-    tag_line,
-    updated_at,
-    created_at
+    users.user_id,
+    users.username,
+    users.game_name,
+    users.tag_line,
+    users.updated_at,
+    user_data.rating,
+    user_data.season_play_count,
+    user_data.total_play_count,
+    user_metadata.last_played_at
 from users
-where game_name = $1 and tag_line = $2
+inner join (
+    select distinct on (user_data.user_id)
+        user_data.user_id,
+        user_data.rating,
+        user_data.season_play_count,
+        user_data.total_play_count
+    from user_data
+    order by user_data.user_id asc, user_data.created_at desc
+) as user_data on users.user_id = user_data.user_id
+inner join user_metadata on users.user_id = user_metadata.user_id
+where users.game_name = $1 and users.tag_line = $2
 `
 
 type GetUserByMaiIDParams struct {
-	GameName string
-	TagLine  string
+	GameName string `json:"gameName"`
+	TagLine  string `json:"tagLine"`
 }
 
-func (q *Queries) GetUserByMaiID(ctx context.Context, arg GetUserByMaiIDParams) (User, error) {
+type GetUserByMaiIDRow struct {
+	UserID          uuid.UUID        `json:"userID"`
+	Username        string           `json:"username"`
+	GameName        string           `json:"gameName"`
+	TagLine         string           `json:"tagLine"`
+	UpdatedAt       pgtype.Timestamp `json:"updatedAt"`
+	Rating          int32            `json:"rating"`
+	SeasonPlayCount int32            `json:"seasonPlayCount"`
+	TotalPlayCount  int32            `json:"totalPlayCount"`
+	LastPlayedAt    pgtype.Timestamp `json:"lastPlayedAt"`
+}
+
+func (q *Queries) GetUserByMaiID(ctx context.Context, arg GetUserByMaiIDParams) (GetUserByMaiIDRow, error) {
 	row := q.db.QueryRow(ctx, getUserByMaiID, arg.GameName, arg.TagLine)
-	var i User
+	var i GetUserByMaiIDRow
 	err := row.Scan(
 		&i.UserID,
 		&i.Username,
-		&i.Password,
-		&i.SegaID,
-		&i.SegaPassword,
 		&i.GameName,
 		&i.TagLine,
 		&i.UpdatedAt,
-		&i.CreatedAt,
+		&i.Rating,
+		&i.SeasonPlayCount,
+		&i.TotalPlayCount,
+		&i.LastPlayedAt,
 	)
 	return i, err
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
 select
-    user_id,
-    username,
-    password,
-    sega_id,
-    sega_password,
-    game_name,
-    tag_line,
-    updated_at,
-    created_at
+    users.user_id,
+    users.username,
+    users.password,
+    users.sega_id,
+    users.sega_password,
+    users.game_name,
+    users.tag_line
 from users
-where username = $1
+where users.username = $1
 `
 
-func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
+type GetUserByUsernameRow struct {
+	UserID       uuid.UUID `json:"userID"`
+	Username     string    `json:"username"`
+	Password     string    `json:"password"`
+	SegaID       string    `json:"segaID"`
+	SegaPassword string    `json:"segaPassword"`
+	GameName     string    `json:"gameName"`
+	TagLine      string    `json:"tagLine"`
+}
+
+func (q *Queries) GetUserByUsername(ctx context.Context, username string) (GetUserByUsernameRow, error) {
 	row := q.db.QueryRow(ctx, getUserByUsername, username)
-	var i User
+	var i GetUserByUsernameRow
 	err := row.Scan(
 		&i.UserID,
 		&i.Username,
@@ -192,8 +294,6 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.SegaPassword,
 		&i.GameName,
 		&i.TagLine,
-		&i.UpdatedAt,
-		&i.CreatedAt,
 	)
 	return i, err
 }
@@ -213,13 +313,13 @@ returning user_id, username, password, sega_id, sega_password, game_name, tag_li
 `
 
 type UpdateUserParams struct {
-	UserID       uuid.UUID
-	Username     string
-	Password     string
-	SegaID       string
-	SegaPassword string
-	GameName     string
-	TagLine      string
+	UserID       uuid.UUID `json:"userID"`
+	Username     string    `json:"username"`
+	Password     string    `json:"password"`
+	SegaID       string    `json:"segaID"`
+	SegaPassword string    `json:"segaPassword"`
+	GameName     string    `json:"gameName"`
+	TagLine      string    `json:"tagLine"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {

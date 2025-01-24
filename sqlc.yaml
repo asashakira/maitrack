@@ -5,6 +5,9 @@ sql:
     schema: "internal/database/migration"
     gen:
       go:
+        emit_json_tags: true
+        json_tags_id_uppercase: true
+        json_tags_case_style: camel
         out: "internal/database/sqlc"
         sql_package: "pgx/v5"
         overrides:

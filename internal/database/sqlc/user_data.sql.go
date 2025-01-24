@@ -35,13 +35,13 @@ returning
 `
 
 type CreateUserDataParams struct {
-	ID              uuid.UUID
-	UserID          uuid.UUID
-	GameName        string
-	TagLine         string
-	Rating          int32
-	SeasonPlayCount int32
-	TotalPlayCount  int32
+	ID              uuid.UUID `json:"id"`
+	UserID          uuid.UUID `json:"userID"`
+	GameName        string    `json:"gameName"`
+	TagLine         string    `json:"tagLine"`
+	Rating          int32     `json:"rating"`
+	SeasonPlayCount int32     `json:"seasonPlayCount"`
+	TotalPlayCount  int32     `json:"totalPlayCount"`
 }
 
 func (q *Queries) CreateUserData(ctx context.Context, arg CreateUserDataParams) (UserDatum, error) {
@@ -85,8 +85,8 @@ limit 1
 `
 
 type GetUserDataByMaiIDParams struct {
-	GameName string
-	TagLine  string
+	GameName string `json:"gameName"`
+	TagLine  string `json:"tagLine"`
 }
 
 func (q *Queries) GetUserDataByMaiID(ctx context.Context, arg GetUserDataByMaiIDParams) (UserDatum, error) {
