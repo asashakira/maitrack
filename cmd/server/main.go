@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/asashakira/mai.gg/internal/api"
-	"github.com/asashakira/mai.gg/internal/api/handler"
 	"github.com/asashakira/mai.gg/internal/cron"
 	"github.com/asashakira/mai.gg/internal/database"
 	"github.com/joho/godotenv"
@@ -40,8 +39,8 @@ func main() {
 		log.Fatalf("cron error: %s", cronErr)
 	}
 
-	h := handler.New(pool)
-	server := api.New(h)
+	// run server
+	server := api.New(pool)
 	err = server.Run(port)
 	if err != nil {
 		log.Fatalf("failed to run server: %s", err)
