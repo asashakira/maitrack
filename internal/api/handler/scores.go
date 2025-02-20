@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	database "github.com/asashakira/mai.gg/internal/database/sqlc"
 	"github.com/asashakira/mai.gg/utils"
@@ -118,6 +119,12 @@ func (h *Handler) CreateScore(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, 200, score)
 }
 
+type ScoresResponse struct {
+	Scores     []database.GetScoreByMaiIDRow `json:"scores"`
+	NextOffset int                           `json:"nextOffset,omitEmpty"`
+	HasMore    bool                          `json:"hasMore"`
+}
+
 // gets score by maiID (gameName + tagLine)
 func (h *Handler) GetScoresByMaiID(w http.ResponseWriter, r *http.Request) {
 	maiID := chi.URLParam(r, "maiID")
@@ -130,9 +137,21 @@ func (h *Handler) GetScoresByMaiID(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, errorMessage)
 		return
 	}
+
+	limit, limitErr := strconv.Atoi(r.URL.Query().Get("limit"))
+	if limitErr != nil {
+		limit = 10
+	}
+	offset, offsetErr := strconv.Atoi(r.URL.Query().Get("offset"))
+	if offsetErr != nil {
+		offset = 0
+	}
+
 	scores, err := h.queries.GetScoreByMaiID(r.Context(), database.GetScoreByMaiIDParams{
 		GameName: gameName,
 		TagLine:  tagLine,
+		Limit:    int32(limit),
+		Offset:   int32(offset),
 	})
 	if err != nil {
 		// Handle "no rows found"
@@ -148,5 +167,15 @@ func (h *Handler) GetScoresByMaiID(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, errorMessage)
 		return
 	}
-	respondWithJSON(w, 200, scores)
+
+	nextOffset := offset + limit
+	hasMore := len(scores) == limit
+
+	response := ScoresResponse{
+		Scores:     scores,
+		NextOffset: nextOffset,
+		HasMore:    hasMore,
+	}
+
+	respondWithJSON(w, 200, response)
 }
