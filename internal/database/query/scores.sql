@@ -98,7 +98,9 @@ from scores
 inner join songs on scores.song_id = songs.song_id
 inner join beatmaps on scores.beatmap_id = beatmaps.beatmap_id
 inner join users on scores.user_id = users.user_id
-where users.game_name = $1 and users.tag_line = $2;
+where users.game_name = $1 and users.tag_line = $2
+order by scores.played_at desc
+limit $3 offset $4;
 
 -- name: GetScoreByUserID :many
 select

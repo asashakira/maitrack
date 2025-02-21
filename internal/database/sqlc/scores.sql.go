@@ -383,11 +383,15 @@ inner join songs on scores.song_id = songs.song_id
 inner join beatmaps on scores.beatmap_id = beatmaps.beatmap_id
 inner join users on scores.user_id = users.user_id
 where users.game_name = $1 and users.tag_line = $2
+order by scores.played_at desc
+limit $3 offset $4
 `
 
 type GetScoreByMaiIDParams struct {
 	GameName string `json:"gameName"`
 	TagLine  string `json:"tagLine"`
+	Limit    int32  `json:"limit"`
+	Offset   int32  `json:"offset"`
 }
 
 type GetScoreByMaiIDRow struct {
@@ -438,7 +442,12 @@ type GetScoreByMaiIDRow struct {
 }
 
 func (q *Queries) GetScoreByMaiID(ctx context.Context, arg GetScoreByMaiIDParams) ([]GetScoreByMaiIDRow, error) {
-	rows, err := q.db.Query(ctx, getScoreByMaiID, arg.GameName, arg.TagLine)
+	rows, err := q.db.Query(ctx, getScoreByMaiID,
+		arg.GameName,
+		arg.TagLine,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}
