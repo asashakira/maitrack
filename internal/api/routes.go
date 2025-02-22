@@ -22,7 +22,7 @@ func SetUpRoutes(r *chi.Mux, h *handler.Handler, m *middleware.Middleware) {
 	v1Router.Get("/err", handler.ErrorCheck)
 
 	// auth
-	v1Router.Post("/register", m.APIKeyAuth(h.Register))
+	v1Router.Post("/auth/register", m.APIKeyAuth(h.Register))
 
 	// user routes
 	v1Router.Get("/users/by-mai-id/{maiID}", m.APIKeyAuth(h.GetUserByMaiID))
