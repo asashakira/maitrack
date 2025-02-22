@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	database "github.com/asashakira/mai.gg/internal/database/sqlc"
+	"github.com/asashakira/mai.gg/internal/utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -35,7 +36,7 @@ func (h *Handler) CreateBeatmap(w http.ResponseWriter, r *http.Request) {
 	params := parameters{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("Error parsing JSON: %s", err))
+		utils.RespondWithError(w, 400, fmt.Sprintf("Error parsing JSON: %s", err))
 		return
 	}
 
@@ -56,25 +57,25 @@ func (h *Handler) CreateBeatmap(w http.ResponseWriter, r *http.Request) {
 		MaxDxScore:    params.MaxDxScore,
 	})
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("CreateBeatmap %s", err))
+		utils.RespondWithError(w, 400, fmt.Sprintf("CreateBeatmap %s", err))
 		return
 	}
-	respondWithJSON(w, 200, beatmap)
+	utils.RespondWithJSON(w, 200, beatmap)
 }
 
 func (h *Handler) GetAllBeatmaps(w http.ResponseWriter, r *http.Request) {
 	beatmaps, err := h.queries.GetAllBeatmaps(r.Context())
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("GetAllBeatmaps %s", err))
+		utils.RespondWithError(w, 400, fmt.Sprintf("GetAllBeatmaps %s", err))
 		return
 	}
-	respondWithJSON(w, 200, beatmaps)
+	utils.RespondWithJSON(w, 200, beatmaps)
 }
 
 func (h *Handler) GetBeatmapsBySongID(w http.ResponseWriter, r *http.Request) {
 	songID, err := uuid.Parse(chi.URLParam(r, "songID"))
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("error parsing songID: %s", err))
+		utils.RespondWithError(w, 400, fmt.Sprintf("error parsing songID: %s", err))
 		return
 	}
 
@@ -84,16 +85,16 @@ func (h *Handler) GetBeatmapsBySongID(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, pgx.ErrNoRows) {
 			errorMessage := fmt.Sprintf("No beatmaps found with provided songID: %s", err)
 			log.Println(errorMessage)
-			respondWithError(w, 404, errorMessage)
+			utils.RespondWithError(w, 404, errorMessage)
 			return
 		}
 		// Handle other errors
 		errorMessage := fmt.Sprintf("GetBeatmapsBySongID %s", err)
 		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
 		return
 	}
-	respondWithJSON(w, 200, beatmaps)
+	utils.RespondWithJSON(w, 200, beatmaps)
 }
 
 func (h *Handler) UpdateBeatmap(w http.ResponseWriter, r *http.Request) {
@@ -118,7 +119,7 @@ func (h *Handler) UpdateBeatmap(w http.ResponseWriter, r *http.Request) {
 	params := parameters{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("Error parsing JSON: %v", err))
+		utils.RespondWithError(w, 400, fmt.Sprintf("Error parsing JSON: %v", err))
 		return
 	}
 
@@ -127,7 +128,7 @@ func (h *Handler) UpdateBeatmap(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errorMessage := fmt.Sprintf("beatmap not found %s", err)
 		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
 		return
 	}
 
@@ -148,8 +149,8 @@ func (h *Handler) UpdateBeatmap(w http.ResponseWriter, r *http.Request) {
 		MaxDxScore:    ifNotNil(params.MaxDxScore, beatmap.MaxDxScore),
 	})
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("UpdateBeatmap %s", err))
+		utils.RespondWithError(w, 400, fmt.Sprintf("UpdateBeatmap %s", err))
 		return
 	}
-	respondWithJSON(w, 200, updatedBeatmap)
+	utils.RespondWithJSON(w, 200, updatedBeatmap)
 }

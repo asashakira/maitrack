@@ -3,13 +3,15 @@ package handler
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/asashakira/mai.gg/internal/utils"
 )
 
 func HealthCheck(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Checking Health")
-	respondWithJSON(w, 200, struct{}{})
+	utils.RespondWithJSON(w, 200, struct{}{})
 }
 
 func ErrorCheck(w http.ResponseWriter, r *http.Request) {
-	respondWithError(w, 400, "Something went wrong")
+	utils.RespondWithError(w, 400, "Something went wrong")
 }

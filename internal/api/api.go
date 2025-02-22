@@ -1,10 +1,11 @@
 package api
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/asashakira/mai.gg/internal/api/handler"
+	"github.com/asashakira/mai.gg/internal/api/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -16,19 +17,20 @@ type API struct {
 func New(pool *pgxpool.Pool) *API {
 	router := chi.NewRouter()
 	h := handler.New(pool)
-	SetUpRoutes(router, h)
+	m := middleware.New(pool)
+	SetUpRoutes(router, h, m)
 	return &API{
 		Router: router,
 	}
 }
 
-func (a *API) Run(port string) error {
+func (api *API) Run(port string) error {
 	server := &http.Server{
-		Handler: a.Router,
+		Handler: api.Router,
 		Addr:    ":" + port,
 	}
 
-	fmt.Printf("Server starting on port %v\n", port)
+	log.Printf("Server starting on port %v\n", port)
 	if err := server.ListenAndServe(); err != nil {
 		return err
 	}

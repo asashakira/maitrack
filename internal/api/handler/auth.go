@@ -8,7 +8,7 @@ import (
 
 	database "github.com/asashakira/mai.gg/internal/database/sqlc"
 	"github.com/asashakira/mai.gg/internal/scraper"
-	"github.com/asashakira/mai.gg/utils"
+	"github.com/asashakira/mai.gg/internal/utils"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"golang.org/x/crypto/bcrypt"
@@ -27,7 +27,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	params := parameters{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("Error parsing JSON: %s", err))
+		utils.RespondWithError(w, 400, fmt.Sprintf("Error parsing JSON: %s", err))
 		return
 	}
 
@@ -36,7 +36,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	if scrapeErr != nil {
 		errorMessage := fmt.Sprintf("failed to scrape user data from maimaidxnet: %s", scrapeErr)
 		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
 		return
 	}
 
@@ -45,14 +45,14 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errorMessage := fmt.Sprintf("failed to hash password %s", err)
 		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
 		return
 	}
 	encryptedSegaPassword, err := utils.Encrypt(params.SegaPassword)
 	if err != nil {
 		errorMessage := fmt.Sprintf("failed to encrypt sega password %s", err)
 		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
 		return
 	}
 
@@ -69,7 +69,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errorMessage := fmt.Sprintf("Error Creating User: %s", err)
 		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
 		return
 	}
 
@@ -86,7 +86,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errorMessage := fmt.Sprintf("Error Creating UserData: %s", err)
 		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
 		return
 	}
 
@@ -99,7 +99,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errorMessage := fmt.Sprintf("Error Creating UserMetadata: %s", err)
 		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
 		return
 	}
 
@@ -114,5 +114,5 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		"lastPlayedAt":    usermetadata.LastPlayedAt,
 	}
 
-	respondWithJSON(w, 200, data)
+	utils.RespondWithJSON(w, 200, data)
 }

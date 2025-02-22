@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	database "github.com/asashakira/mai.gg/internal/database/sqlc"
-	"github.com/asashakira/mai.gg/utils"
+	"github.com/asashakira/mai.gg/internal/utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -58,18 +58,18 @@ func (h *Handler) CreateScore(w http.ResponseWriter, r *http.Request) {
 	params := parameters{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("error parsing JSON: %v", err))
+		utils.RespondWithError(w, 400, fmt.Sprintf("error parsing JSON: %v", err))
 		return
 	}
 
 	if params.BeatmapID == "" || params.SongID == "" || params.UserID == "" {
-		respondWithError(w, 400, "BeatmapID, SongID, and UserID are required")
+		utils.RespondWithError(w, 400, "BeatmapID, SongID, and UserID are required")
 		return
 	}
 
 	playedAt, err := utils.StringToUTCTime(params.PlayedAt)
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("error parsing played at date: %v", err))
+		utils.RespondWithError(w, 400, fmt.Sprintf("error parsing played at date: %v", err))
 		return
 	}
 
@@ -113,10 +113,10 @@ func (h *Handler) CreateScore(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errorMessage := fmt.Sprintf("CreateScore %v", err)
 		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
 		return
 	}
-	respondWithJSON(w, 200, score)
+	utils.RespondWithJSON(w, 200, score)
 }
 
 type ScoresResponse struct {
@@ -134,7 +134,7 @@ func (h *Handler) GetScoresByMaiID(w http.ResponseWriter, r *http.Request) {
 	if decodeMaiIDErr != nil {
 		errorMessage := fmt.Sprintf("error decoding maiID %s", decodeMaiIDErr)
 		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
 		return
 	}
 
@@ -158,13 +158,13 @@ func (h *Handler) GetScoresByMaiID(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, pgx.ErrNoRows) {
 			errorMessage := fmt.Sprintf("No score found with provided MaiID '%s': %s", maiID, err)
 			log.Println(errorMessage)
-			respondWithError(w, 404, errorMessage)
+			utils.RespondWithError(w, 404, errorMessage)
 			return
 		}
 		// Handle other errors
 		errorMessage := fmt.Sprintf("GetScoresByMaiID %s", err)
 		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
 		return
 	}
 
@@ -177,5 +177,5 @@ func (h *Handler) GetScoresByMaiID(w http.ResponseWriter, r *http.Request) {
 		HasMore:    hasMore,
 	}
 
-	respondWithJSON(w, 200, response)
+	utils.RespondWithJSON(w, 200, response)
 }

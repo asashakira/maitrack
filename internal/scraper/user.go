@@ -7,7 +7,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	database "github.com/asashakira/mai.gg/internal/database/sqlc"
 	"github.com/asashakira/mai.gg/pkg/maimaiclient"
-	"github.com/asashakira/mai.gg/utils"
+	"github.com/asashakira/mai.gg/internal/utils"
 )
 
 // scrape rating and playcounts from maimaidxnet

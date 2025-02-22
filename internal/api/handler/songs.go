@@ -9,7 +9,7 @@ import (
 	"net/url"
 
 	database "github.com/asashakira/mai.gg/internal/database/sqlc"
-	"github.com/asashakira/mai.gg/utils"
+	"github.com/asashakira/mai.gg/internal/utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -34,13 +34,13 @@ func (h *Handler) CreateSong(w http.ResponseWriter, r *http.Request) {
 	params := parameters{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("error parsing JSON: %v", err))
+		utils.RespondWithError(w, 400, fmt.Sprintf("error parsing JSON: %v", err))
 		return
 	}
 
 	releaseDate, err := utils.StringToUTCTime(params.ReleaseDate)
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("error parsing release date: %v", err))
+		utils.RespondWithError(w, 400, fmt.Sprintf("error parsing release date: %v", err))
 		return
 	}
 
@@ -49,7 +49,7 @@ func (h *Handler) CreateSong(w http.ResponseWriter, r *http.Request) {
 		parsedDate, err := utils.StringToUTCTime(params.DeleteDate)
 		deleteDate.Scan(parsedDate)
 		if err != nil {
-			respondWithError(w, 400, fmt.Sprintf("error parsing delete date: %v", err))
+			utils.RespondWithError(w, 400, fmt.Sprintf("error parsing delete date: %v", err))
 			return
 		}
 	}
@@ -71,10 +71,10 @@ func (h *Handler) CreateSong(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errorMessage := fmt.Sprintf("CreateSong %v", err)
 		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
 		return
 	}
-	respondWithJSON(w, 200, song)
+	utils.RespondWithJSON(w, 200, song)
 }
 
 func (h *Handler) GetAllSongs(w http.ResponseWriter, r *http.Request) {
@@ -82,10 +82,10 @@ func (h *Handler) GetAllSongs(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errorMessage := fmt.Sprintf("GetAllSongs %v", err)
 		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
 		return
 	}
-	respondWithJSON(w, 200, songs)
+	utils.RespondWithJSON(w, 200, songs)
 }
 
 // get song using altkey
@@ -97,7 +97,7 @@ func (h *Handler) GetSongByAltKey(w http.ResponseWriter, r *http.Request) {
 	altkey := chi.URLParam(r, "altkey")
 	altkey, err := url.QueryUnescape(altkey)
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("error decoding altkey from url: %v", err))
+		utils.RespondWithError(w, 400, fmt.Sprintf("error decoding altkey from url: %v", err))
 		return
 	}
 
@@ -107,16 +107,16 @@ func (h *Handler) GetSongByAltKey(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, pgx.ErrNoRows) {
 			errorMessage := fmt.Sprintf("No song found with provided altkey '%s': %s", altkey, err)
 			log.Println(errorMessage)
-			respondWithError(w, 404, errorMessage)
+			utils.RespondWithError(w, 404, errorMessage)
 			return
 		}
 		// Handle other errors
 		errorMessage := fmt.Sprintf("GetSongByAltKey %v", err)
 		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
 		return
 	}
-	respondWithJSON(w, 200, song)
+	utils.RespondWithJSON(w, 200, song)
 }
 
 // return array of songs that matches title
@@ -124,7 +124,7 @@ func (h *Handler) GetSongsByTitle(w http.ResponseWriter, r *http.Request) {
 	title := chi.URLParam(r, "title")
 	title, err := url.QueryUnescape(title)
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("error decoding title from url: %v", err))
+		utils.RespondWithError(w, 400, fmt.Sprintf("error decoding title from url: %v", err))
 		return
 	}
 
@@ -134,16 +134,16 @@ func (h *Handler) GetSongsByTitle(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, pgx.ErrNoRows) {
 			errorMessage := fmt.Sprintf("No song found with provided title '%s': %s", title, err)
 			log.Println(errorMessage)
-			respondWithError(w, 404, errorMessage)
+			utils.RespondWithError(w, 404, errorMessage)
 			return
 		}
 		// Handle other errors
 		errorMessage := fmt.Sprintf("GetSongByTitle %v", err)
 		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
 		return
 	}
-	respondWithJSON(w, 200, songs)
+	utils.RespondWithJSON(w, 200, songs)
 }
 
 func (h *Handler) UpdateSong(w http.ResponseWriter, r *http.Request) {
@@ -165,7 +165,7 @@ func (h *Handler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 	params := parameters{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("error parsing JSON: %v", err))
+		utils.RespondWithError(w, 400, fmt.Sprintf("error parsing JSON: %v", err))
 		return
 	}
 
@@ -174,7 +174,7 @@ func (h *Handler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errorMessage := fmt.Sprintf("song not found %v", err)
 		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
 		return
 	}
 
@@ -184,7 +184,7 @@ func (h *Handler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 		parsedDate, err := utils.StringToUTCTime(params.ReleaseDate)
 		releaseDate.Scan(parsedDate)
 		if err != nil {
-			respondWithError(w, 400, fmt.Sprintf("error parsing release date: %v", err))
+			utils.RespondWithError(w, 400, fmt.Sprintf("error parsing release date: %v", err))
 			return
 		}
 	}
@@ -195,7 +195,7 @@ func (h *Handler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 		parsedDate, err := utils.StringToUTCTime(params.DeleteDate)
 		deleteDate.Scan(parsedDate)
 		if err != nil {
-			respondWithError(w, 400, fmt.Sprintf("error parsing delete date: %v", err))
+			utils.RespondWithError(w, 400, fmt.Sprintf("error parsing delete date: %v", err))
 			return
 		}
 	}
@@ -218,8 +218,8 @@ func (h *Handler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errorMessage := fmt.Sprintf("UpdateSong %v", err)
 		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
 		return
 	}
-	respondWithJSON(w, 200, updatedSong)
+	utils.RespondWithJSON(w, 200, updatedSong)
 }
