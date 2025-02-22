@@ -116,3 +116,5 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	utils.RespondWithJSON(w, 200, data)
 }
+
+func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {}
