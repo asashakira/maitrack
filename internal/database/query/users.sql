@@ -68,15 +68,10 @@ where users.user_id = $1;
 
 -- name: GetUserByUsername :one
 select
-    users.user_id,
-    users.username,
-    users.password,
-    users.sega_id,
-    users.sega_password,
-    users.game_name,
-    users.tag_line
+    username,
+    password
 from users
-where users.username = $1;
+where username = $1;
 
 -- name: GetUserByMaiID :one
 select
