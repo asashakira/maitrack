@@ -6,7 +6,7 @@ import (
 	"log"
 
 	database "github.com/asashakira/mai.gg/internal/database/sqlc"
-	"github.com/asashakira/mai.gg/utils"
+	"github.com/asashakira/mai.gg/internal/utils"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"

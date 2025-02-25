@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	database "github.com/asashakira/mai.gg/internal/database/sqlc"
+	"github.com/asashakira/mai.gg/internal/utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 )
@@ -19,7 +20,7 @@ func (h *Handler) GetUserByMaiID(w http.ResponseWriter, r *http.Request) {
 	if decodeMaiIDErr != nil {
 		errorMessage := fmt.Sprintf("error decoding maiID %s", decodeMaiIDErr)
 		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
 		return
 	}
 
@@ -33,14 +34,18 @@ func (h *Handler) GetUserByMaiID(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, pgx.ErrNoRows) {
 			errorMessage := fmt.Sprintf("No user found with provided fields: %s", err)
 			log.Println(errorMessage)
-			respondWithError(w, 404, errorMessage)
+			utils.RespondWithError(w, 404, errorMessage)
 			return
 		}
 		errorMessage := fmt.Sprintf("GetUserByMaiID %s", err)
 		log.Println(errorMessage)
-		respondWithError(w, 400, errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
 		return
 	}
 
-	respondWithJSON(w, 200, user)
+	utils.RespondWithJSON(w, 200, user)
+}
+
+func (h *Handler) GetUserHealthCheck(w http.ResponseWriter, r *http.Request) {
+	utils.RespondWithJSON(w, 200, "Hello")
 }
