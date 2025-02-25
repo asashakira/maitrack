@@ -188,11 +188,9 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := map[string]interface{}{
-		"token": tokenString,
-	}
-
-	utils.RespondWithJSON(w, 200, data)
+	utils.RespondWithJSON(w, 200, map[string]string{
+		"jwt": tokenString,
+	})
 }
 
 func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
