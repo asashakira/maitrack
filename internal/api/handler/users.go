@@ -45,3 +45,7 @@ func (h *Handler) GetUserByMaiID(w http.ResponseWriter, r *http.Request) {
 
 	utils.RespondWithJSON(w, 200, user)
 }
+
+func (h *Handler) GetUserHealthCheck(w http.ResponseWriter, r *http.Request) {
+	utils.RespondWithJSON(w, 200, "Hello")
+}

@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 
 	database "github.com/asashakira/mai.gg/internal/database/sqlc"
 	"github.com/asashakira/mai.gg/internal/scraper"
+	"github.com/asashakira/mai.gg/internal/service"
 	"github.com/asashakira/mai.gg/internal/utils"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -112,6 +116,79 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		"seasonPlayCount": userData.SeasonPlayCount,
 		"totalPlayCount":  userData.TotalPlayCount,
 		"lastPlayedAt":    usermetadata.LastPlayedAt,
+	}
+
+	utils.RespondWithJSON(w, 200, data)
+}
+
+func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
+	type parameters struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		utils.RespondWithError(w, 400, fmt.Sprintf("Error parsing JSON: %s", err))
+		return
+	}
+
+	user, getUserErr := h.queries.GetUserByUsername(r.Context(), params.Username)
+	if getUserErr != nil {
+		errorMessage := fmt.Sprintf("user not found: %s", getUserErr)
+		log.Println(errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
+		return
+	}
+
+	errf := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(params.Password))
+	if errf != nil {
+		if errf == bcrypt.ErrMismatchedHashAndPassword { // Password does not match!
+			errorMessage := fmt.Sprintf("invalid login credentials: %s", errf)
+			log.Println(errorMessage)
+			utils.RespondWithError(w, 401, errorMessage)
+			return
+		}
+		errorMessage := fmt.Sprintf("CompareHashAndPassword error: ", errf)
+		log.Println(errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
+		return
+	}
+
+	claims := service.Claims{
+		Username: user.Username,
+		Role:     "user",
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    "mai.gg",
+			Subject:   user.Username,
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+		},
+	}
+
+	// Create the token using HS256
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// Get the secret key from environment variable
+	secretKey, secretKeyErr := service.GetSecretKey()
+	if secretKeyErr != nil {
+		errorMessage := fmt.Sprintf("invalid login credentials: %s", secretKeyErr)
+		log.Println(errorMessage)
+		utils.RespondWithError(w, 500, errorMessage)
+		return
+	}
+
+	// Sign the token with the secret key
+	tokenString, generateTokenErr := token.SignedString(secretKey)
+	if generateTokenErr != nil {
+		errorMessage := fmt.Sprintf("Failed to generate token: %s", generateTokenErr)
+		log.Println(errorMessage)
+		utils.RespondWithError(w, 500, errorMessage)
+		return
+	}
+
+	data := map[string]interface{}{
+		"token": tokenString,
 	}
 
 	utils.RespondWithJSON(w, 200, data)

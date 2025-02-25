@@ -22,27 +22,29 @@ func SetUpRoutes(r *chi.Mux, h *handler.Handler, m *middleware.Middleware) {
 	v1Router.Get("/err", handler.ErrorCheck)
 
 	// auth
-	v1Router.Post("/register", m.APIKeyAuth(h.Register))
+	v1Router.Post("/auth/register", h.Register)
+    v1Router.Post("/auth/login", h.Login)
 
-	// user routes
-	v1Router.Get("/users/by-mai-id/{maiID}", m.APIKeyAuth(h.GetUserByMaiID))
+    // user routes
+    v1Router.Get("/users/by-mai-id/{maiID}", h.GetUserByMaiID)
+    v1Router.Get("/users/healthz", m.Auth(h.GetUserHealthCheck))
 
-	// songs
-	v1Router.Get("/songs", m.APIKeyAuth(h.GetAllSongs))
-	v1Router.Get("/songs/by-altkey/{altkey}", m.APIKeyAuth(h.GetSongByAltKey))
-	v1Router.Get("/songs/by-title/{title}", m.APIKeyAuth(h.GetSongsByTitle))
-	v1Router.Post("/songs", m.APIKeyAuth(h.CreateSong))
-	v1Router.Patch("/songs", m.APIKeyAuth(h.UpdateSong))
+    // songs
+    v1Router.Get("/songs", h.GetAllSongs)
+    v1Router.Get("/songs/by-altkey/{altkey}", h.GetSongByAltKey)
+    v1Router.Get("/songs/by-title/{title}", h.GetSongsByTitle)
+    v1Router.Post("/songs", h.CreateSong)
+    v1Router.Patch("/songs", h.UpdateSong)
 
-	// beatmaps
-	v1Router.Get("/beatmaps", m.APIKeyAuth(h.GetAllBeatmaps))
-	v1Router.Get("/beatmaps/by-song-id/{songID}", m.APIKeyAuth(h.GetBeatmapsBySongID))
-	v1Router.Post("/beatmaps", m.APIKeyAuth(h.CreateBeatmap))
-	v1Router.Patch("/beatmaps", m.APIKeyAuth(h.UpdateBeatmap))
+    // beatmaps
+    v1Router.Get("/beatmaps", h.GetAllBeatmaps)
+    v1Router.Get("/beatmaps/by-song-id/{songID}", h.GetBeatmapsBySongID)
+    v1Router.Post("/beatmaps", h.CreateBeatmap)
+    v1Router.Patch("/beatmaps", h.UpdateBeatmap)
 
-	// scores
-	v1Router.Get("/users/by-mai-id/{maiID}/scores", m.APIKeyAuth(h.GetScoresByMaiID))
-	v1Router.Post("/scores", m.APIKeyAuth(h.CreateScore))
+    // scores
+    v1Router.Get("/users/by-mai-id/{maiID}/scores", h.GetScoresByMaiID)
+    v1Router.Post("/scores", h.CreateScore)
 
 	r.Mount("/v1", v1Router)
 }

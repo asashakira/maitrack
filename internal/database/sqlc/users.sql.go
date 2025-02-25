@@ -262,39 +262,21 @@ func (q *Queries) GetUserByMaiID(ctx context.Context, arg GetUserByMaiIDParams) 
 
 const getUserByUsername = `-- name: GetUserByUsername :one
 select
-    users.user_id,
-    users.username,
-    users.password,
-    users.sega_id,
-    users.sega_password,
-    users.game_name,
-    users.tag_line
+    username,
+    password
 from users
-where users.username = $1
+where username = $1
 `
 
 type GetUserByUsernameRow struct {
-	UserID       uuid.UUID `json:"userID"`
-	Username     string    `json:"username"`
-	Password     string    `json:"password"`
-	SegaID       string    `json:"segaID"`
-	SegaPassword string    `json:"segaPassword"`
-	GameName     string    `json:"gameName"`
-	TagLine      string    `json:"tagLine"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (GetUserByUsernameRow, error) {
 	row := q.db.QueryRow(ctx, getUserByUsername, username)
 	var i GetUserByUsernameRow
-	err := row.Scan(
-		&i.UserID,
-		&i.Username,
-		&i.Password,
-		&i.SegaID,
-		&i.SegaPassword,
-		&i.GameName,
-		&i.TagLine,
-	)
+	err := row.Scan(&i.Username, &i.Password)
 	return i, err
 }
 
