@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,18 +12,10 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func (m *Middleware) APIKeyAuth(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// TODO: implement
+// Context key to store the authenticated user
+type contextKey string
 
-		// apiKey := r.Header.Get("X-API-Key")
-		// if apiKey == "" {
-		// 	utils.RespondWithError(w, 401, "invalid API key")
-		// 	return
-		// }
-		next(w, r)
-	}
-}
+const UserContextKey contextKey = "authenticatedUser"
 
 // Auth is a middleware that validates JWTs.
 func (m *Middleware) Auth(next http.HandlerFunc) http.HandlerFunc {
@@ -50,7 +43,6 @@ func (m *Middleware) Auth(next http.HandlerFunc) http.HandlerFunc {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
-			fmt.Println(claims)
 			return secretKey, nil
 		})
 		if err != nil {
@@ -66,6 +58,8 @@ func (m *Middleware) Auth(next http.HandlerFunc) http.HandlerFunc {
 
 		log.Printf("Authenticated user: %s, Role: %s\n", claims.Username, claims.Role)
 
-		next(w, r)
+		ctx := context.WithValue(r.Context(), UserContextKey, claims)
+
+		next(w, r.WithContext(ctx))
 	}
 }

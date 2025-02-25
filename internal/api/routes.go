@@ -24,6 +24,7 @@ func SetUpRoutes(r *chi.Mux, h *handler.Handler, m *middleware.Middleware) {
 	// auth
 	v1Router.Post("/auth/register", h.Register)
     v1Router.Post("/auth/login", h.Login)
+    v1Router.Get("/auth/me", m.Auth(h.GetMe))
 
     // user routes
     v1Router.Get("/users/by-mai-id/{maiID}", h.GetUserByMaiID)

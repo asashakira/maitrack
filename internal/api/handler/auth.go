@@ -9,6 +9,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
+	"github.com/asashakira/mai.gg/internal/api/middleware"
 	database "github.com/asashakira/mai.gg/internal/database/sqlc"
 	"github.com/asashakira/mai.gg/internal/scraper"
 	"github.com/asashakira/mai.gg/internal/service"
@@ -192,4 +193,17 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.RespondWithJSON(w, 200, data)
+}
+
+func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
+	user, ok := r.Context().Value(middleware.UserContextKey).(*service.Claims)
+	if !ok {
+		fmt.Println("no authenticated user found in context")
+	}
+
+	utils.RespondWithJSON(w, 200, map[string]string{
+		"message":  "Access granted",
+		"username": user.Username,
+		"role":     user.Role,
+	})
 }
