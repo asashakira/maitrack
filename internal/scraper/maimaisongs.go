@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/asashakira/mai.gg/internal/database/sqlc"
-	"github.com/asashakira/mai.gg/internal/utils"
+	"github.com/asashakira/maitrack/internal/database/sqlc"
+	"github.com/asashakira/maitrack/internal/utils"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )

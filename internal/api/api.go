@@ -4,8 +4,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/asashakira/mai.gg/internal/api/handler"
-	"github.com/asashakira/mai.gg/internal/api/middleware"
+	"github.com/asashakira/maitrack/internal/api/handler"
+	"github.com/asashakira/maitrack/internal/api/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )

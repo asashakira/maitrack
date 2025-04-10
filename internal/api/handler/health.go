@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/asashakira/mai.gg/internal/utils"
+	"github.com/asashakira/maitrack/internal/utils"
 )
 
 func HealthCheck(w http.ResponseWriter, r *http.Request) {

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	database "github.com/asashakira/mai.gg/internal/database/sqlc"
-	"github.com/asashakira/mai.gg/internal/utils"
+	database "github.com/asashakira/maitrack/internal/database/sqlc"
+	"github.com/asashakira/maitrack/internal/utils"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"

@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	database "github.com/asashakira/mai.gg/internal/database/sqlc"
-	"github.com/asashakira/mai.gg/pkg/maimaiclient"
-	"github.com/asashakira/mai.gg/internal/utils"
+	database "github.com/asashakira/maitrack/internal/database/sqlc"
+	"github.com/asashakira/maitrack/pkg/maimaiclient"
+	"github.com/asashakira/maitrack/internal/utils"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/schollz/progressbar/v3"

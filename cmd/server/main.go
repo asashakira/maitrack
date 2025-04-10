@@ -4,9 +4,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/asashakira/mai.gg/internal/api"
-	"github.com/asashakira/mai.gg/internal/cron"
-	"github.com/asashakira/mai.gg/internal/database"
+	"github.com/asashakira/maitrack/internal/api"
+	"github.com/asashakira/maitrack/internal/cron"
+	"github.com/asashakira/maitrack/internal/database"
 	"github.com/joho/godotenv"
 )
 

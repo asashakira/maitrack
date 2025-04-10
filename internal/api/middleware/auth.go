@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/asashakira/mai.gg/internal/service"
-	"github.com/asashakira/mai.gg/internal/utils"
+	"github.com/asashakira/maitrack/internal/service"
+	"github.com/asashakira/maitrack/internal/utils"
 	"github.com/golang-jwt/jwt/v5"
 )
 
