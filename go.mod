@@ -1,4 +1,4 @@
-module github.com/asashakira/mai.gg
+module github.com/asashakira/maitrack
 
 go 1.23.5
 

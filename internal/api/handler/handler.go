@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/asashakira/mai.gg/internal/database/sqlc"
+	"github.com/asashakira/maitrack/internal/database/sqlc"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 

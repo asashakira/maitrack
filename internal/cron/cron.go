@@ -1,7 +1,7 @@
 package cron
 
 import (
-	"github.com/asashakira/mai.gg/internal/scraper"
+	"github.com/asashakira/maitrack/internal/scraper"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/robfig/cron/v3"
 )

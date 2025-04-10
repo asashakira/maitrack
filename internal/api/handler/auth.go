@@ -9,11 +9,11 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
-	"github.com/asashakira/mai.gg/internal/api/middleware"
-	database "github.com/asashakira/mai.gg/internal/database/sqlc"
-	"github.com/asashakira/mai.gg/internal/scraper"
-	"github.com/asashakira/mai.gg/internal/service"
-	"github.com/asashakira/mai.gg/internal/utils"
+	"github.com/asashakira/maitrack/internal/api/middleware"
+	database "github.com/asashakira/maitrack/internal/database/sqlc"
+	"github.com/asashakira/maitrack/internal/scraper"
+	"github.com/asashakira/maitrack/internal/service"
+	"github.com/asashakira/maitrack/internal/utils"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"golang.org/x/crypto/bcrypt"
