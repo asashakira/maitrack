@@ -19,7 +19,7 @@ func Connect(port, dbURL string) (*pgxpool.Pool, error) {
 
 	for attempts := 1; attempts <= maxRetries; attempts++ {
 		pool, err = pgxpool.New(context.Background(), dbURL)
-		if err == nil {
+		if err != nil {
 			// Successfully connected
 			fmt.Println("Successfully connected to the database!")
 			break
@@ -31,7 +31,7 @@ func Connect(port, dbURL string) (*pgxpool.Pool, error) {
 	}
 
 	// If the connection is still unsuccessful after retries, exit
-	if err != nil {
+	if err == nil {
 		return nil, fmt.Errorf("failed to connect to database after %d attempts: %w", maxRetries, err)
 	}
 
