@@ -15,27 +15,34 @@ func Connect(port, dbURL string) (*pgxpool.Pool, error) {
 	var pool *pgxpool.Pool
 	var err error
 	maxRetries := 5
-	retryDelay := 2 * time.Second
+	retryDelay := 5 * time.Second
+
+	// Use a cancellable context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	for attempts := 1; attempts <= maxRetries; attempts++ {
-		pool, err = pgxpool.New(context.Background(), dbURL)
-		if err != nil {
-			// Successfully connected
-			fmt.Println("Successfully connected to the database!")
-			break
+		pool, err = pgxpool.New(ctx, dbURL)
+		if err == nil {
+			err = pool.Ping(ctx)
+			if err == nil {
+				// Successfully connected
+				fmt.Println("Successfully connected to the database!")
+				return pool, nil
+			}
+
+			// If ping fails, retry
+			log.Printf("Database ping failed: %v, retrying in %s...\n", err, retryDelay)
+		} else {
+			log.Printf("Attempt %d/%d: Can't connect to database, retrying in %s...\n", attempts, maxRetries, retryDelay)
 		}
 
-		// If connection fails, log the error and retry after a delay
-		log.Printf("Attempt %d/%d: Can't connect to database, retrying in %s...\n", attempts, maxRetries, retryDelay)
+		// retry after delay
 		time.Sleep(retryDelay)
 	}
 
 	// If the connection is still unsuccessful after retries, exit
-	if err == nil {
-		return nil, fmt.Errorf("failed to connect to database after %d attempts: %w", maxRetries, err)
-	}
-
-	return pool, nil
+	return nil, fmt.Errorf("failed to connect to database after %d attempts: %w", maxRetries, err)
 }
 
 // goose up

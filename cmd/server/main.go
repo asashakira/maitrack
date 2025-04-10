@@ -27,10 +27,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer pool.Close()
 
 	// run database migration
 	if err := database.Migrate(pool); err != nil {
-		log.Printf("migration error: %s", err)
+		log.Fatal("db migration error: ", err)
 	}
 
 	// cron worker
