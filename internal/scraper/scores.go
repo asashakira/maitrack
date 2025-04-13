@@ -16,7 +16,6 @@ import (
 	"github.com/asashakira/maitrack/internal/utils"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/schollz/progressbar/v3"
 )
 
 // scrape user scores from maimaidxnet
@@ -62,9 +61,6 @@ func scrapeScores(queries *database.Queries, segaID, segaPassword string, lastPl
 		return nil, nil
 	}
 
-	// init progressbar
-	bar := progressbar.Default(int64(len(recordIDs)))
-
 	// reverse order to insert from older scores
 	slices.Reverse(recordIDs)
 
@@ -77,9 +73,6 @@ func scrapeScores(queries *database.Queries, segaID, segaPassword string, lastPl
 		}
 
 		scores = append(scores, score)
-
-		// +1 progress
-		bar.Add(1)
 
 		// wait to not get ip blocked
 		time.Sleep(1 * time.Second)
