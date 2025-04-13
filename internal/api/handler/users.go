@@ -24,7 +24,6 @@ func (h *Handler) GetUserByMaiID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// select * from users
 	user, err := h.queries.GetUserByMaiID(r.Context(), database.GetUserByMaiIDParams{
 		GameName: gameName,
 		TagLine:  tagLine,
@@ -44,6 +43,17 @@ func (h *Handler) GetUserByMaiID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.RespondWithJSON(w, 200, user)
+}
+
+func (h *Handler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
+	users, err := h.queries.GetAllUsers(r.Context())
+	if err != nil {
+		errorMessage := fmt.Sprintf("GetAllUsers %s", err)
+		log.Println(errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
+		return
+	}
+	utils.RespondWithJSON(w, 200, users)
 }
 
 func (h *Handler) GetUserHealthCheck(w http.ResponseWriter, r *http.Request) {

@@ -29,6 +29,7 @@ func SetUpRoutes(r *chi.Mux, h *handler.Handler, m *middleware.Middleware) {
 	v1Router.Get("/auth/me", m.Auth(h.GetMe))
 
 	// user routes
+	v1Router.Get("/users", h.GetAllUsers)
 	v1Router.Get("/users/by-mai-id/{maiID}", h.GetUserByMaiID)
 	v1Router.Get("/users/healthz", m.Auth(h.GetUserHealthCheck))
 
