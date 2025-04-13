@@ -141,7 +141,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 🔹 Set JWT as an HTTP-only cookie
+	// Set JWT as an HTTP-only cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:     "token",
 		Value:    tokenString,
@@ -152,7 +152,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(time.Hour * 24),
 	})
 
-	// 🔹 Response Data
+	// Response Data
 	data := map[string]any{
 		"userID":          user.UserID,
 		"username":        user.Username,

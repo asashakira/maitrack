@@ -121,7 +121,7 @@ func (h *Handler) CreateScore(w http.ResponseWriter, r *http.Request) {
 
 type ScoresResponse struct {
 	Scores     []database.GetScoreByMaiIDRow `json:"scores"`
-	NextOffset int                           `json:"nextOffset,omitEmpty"`
+	NextOffset int                           `json:"nextOffset,omitempty"`
 	HasMore    bool                          `json:"hasMore"`
 }
 
