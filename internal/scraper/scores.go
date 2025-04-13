@@ -88,9 +88,9 @@ func scrapeScore(queries *database.Queries, m *maimaiclient.Client, recordID str
 	if err != nil {
 		return database.Score{}, fmt.Errorf("request failed: %w", err)
 	}
+	defer r.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(r.Body)
-	defer r.Body.Close()
 	if err != nil {
 		return database.Score{}, err
 	}
@@ -119,8 +119,12 @@ func scrapeScore(queries *database.Queries, m *maimaiclient.Client, recordID str
 	score.DxScore, _ = utils.StringToInt32(utils.RemoveFromString(dxScores[0], `[^\d]`)) // remove non numbers then convert
 
 	// beatmap type
-	// determine by if there are touch notes or not
-	beatmapType := "dx"
+	typeIconImageURL := doc.Find(`img.playlog_music_kind_icon`).AttrOr("src", "Not Found")
+	dxIconImageURL := "https://maimaidx.jp/maimai-mobile/img/music_dx.png"
+	beatmapType := "std"
+	if typeIconImageURL == dxIconImageURL {
+		beatmapType = "dx"
+	}
 
 	// note details
 	doc.Find(`.playlog_notes_detail td`).Each(func(i int, s *goquery.Selection) {
@@ -138,11 +142,6 @@ func scrapeScore(queries *database.Queries, m *maimaiclient.Client, recordID str
 			noteType = "Slide"
 			idx = i % 5
 		case 4:
-			if s.Text() == "" {
-				// no touch notes = std map
-				beatmapType = "std"
-				return
-			}
 			noteType = "Touch"
 			idx = i % 5
 		case 5:
