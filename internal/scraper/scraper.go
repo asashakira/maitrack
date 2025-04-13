@@ -96,7 +96,7 @@ func ScrapeAllUsers(pool *pgxpool.Pool) {
 			}
 
 			// update beatmap if notes are not set
-			updateBeatmapErr := updateBeatmap(queries, score)
+			updateBeatmapErr := updateBeatmapNoteCounts(queries, score)
 			if updateBeatmapErr != nil {
 				log.Println(updateBeatmapErr)
 			}
@@ -168,7 +168,7 @@ func createScore(queries *database.Queries, score database.Score) error {
 }
 
 // update beatmap only if notes are not set
-func updateBeatmap(queries *database.Queries, score database.Score) error {
+func updateBeatmapNoteCounts(queries *database.Queries, score database.Score) error {
 	beatmap, getErr := queries.GetBeatmapByBeatmapID(context.Background(), score.BeatmapID)
 	if getErr != nil {
 		return fmt.Errorf("failed to get beatmap: %w", getErr)
