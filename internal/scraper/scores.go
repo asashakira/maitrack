@@ -181,7 +181,8 @@ func scrapeScore(queries *database.Queries, m *maimaiclient.Client, recordID str
 	score.PlayedAt = pgtype.Timestamp{Time: playedAt, Valid: true}
 
 	// Title
-	title := doc.Find(`.basic_block.m_5.p_5.p_l_10.f_13.break`).Text()
+	doc.Find(`.basic_block.m_5.p_5.p_l_10.f_13.break`).Find(`div`).Remove()
+	title := strings.TrimSpace(doc.Find(`.basic_block.m_5.p_5.p_l_10.f_13.break`).Text())
 
 	// difficulty
 	difficultyImgSrc := doc.Find(`.playlog_top_container.p_r img.playlog_diff.v_b`).AttrOr(`src`, "Not Found")
@@ -272,12 +273,4 @@ func getDifficultyFromImgSrc(imgSrc string) string {
 	default:
 		return ""
 	}
-}
-
-// if the beatmap has Touch notes -> dx beatmap
-func determineBeatmapType(headerText string) string {
-	if strings.Contains(headerText, "Touch") {
-		return "dx"
-	}
-	return "std"
 }
