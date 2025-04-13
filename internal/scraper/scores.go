@@ -3,7 +3,6 @@ package scraper
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/url"
 	"slices"
 	"strconv"
@@ -12,8 +11,8 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	database "github.com/asashakira/maitrack/internal/database/sqlc"
-	"github.com/asashakira/maitrack/pkg/maimaiclient"
 	"github.com/asashakira/maitrack/internal/utils"
+	"github.com/asashakira/maitrack/pkg/maimaiclient"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -69,7 +68,7 @@ func scrapeScores(queries *database.Queries, segaID, segaPassword string, lastPl
 	for _, recordID := range recordIDs {
 		score, err := scrapeScore(queries, m, recordID)
 		if err != nil {
-			log.Printf("failed scraping score: '%s' %s\n", recordID, err)
+			return nil, fmt.Errorf("failed scraping score: '%s' %s", recordID, err)
 		}
 
 		scores = append(scores, score)
@@ -224,6 +223,10 @@ func getSongAndBeatmapID(queries *database.Queries, title, difficulty, beatmapTy
 	songs, getSongErr := queries.GetSongsByTitle(context.Background(), title)
 	if getSongErr != nil {
 		return uuid.Nil, uuid.Nil, fmt.Errorf("song not found: %w", getSongErr)
+	}
+
+	if len(songs) < 1 {
+		return uuid.Nil, uuid.Nil, fmt.Errorf("song with title %s not found", title)
 	}
 
 	// only song title = 'Link' returns two songs
