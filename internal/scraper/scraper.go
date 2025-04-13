@@ -92,7 +92,7 @@ func ScrapeAllUsers(pool *pgxpool.Pool) {
 			createScoreErr := createScore(queries, score)
 			if createScoreErr != nil {
 				log.Println(createScoreErr)
-				continue
+				return
 			}
 
 			// update beatmap if notes are not set
