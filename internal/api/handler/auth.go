@@ -118,7 +118,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		Username: user.Username,
 		Role:     "user",
 		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    "mai.gg",
+			Issuer:    "maitrack",
 			Subject:   user.Username,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
 		},
@@ -201,7 +201,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		Username: user.Username,
 		Role:     "user",
 		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    "mai.gg",
+			Issuer:    "maitrack",
 			Subject:   user.Username,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // Token expires in 24 hours
 		},
