@@ -76,7 +76,8 @@ select
     user_data.rating,
     user_data.season_play_count,
     user_data.total_play_count,
-    user_metadata.last_played_at
+    user_metadata.last_played_at,
+    user_metadata.last_scraped_at
 from users
 inner join (
     select distinct on (user_data.user_id)
@@ -103,6 +104,7 @@ type GetAllUsersRow struct {
 	SeasonPlayCount int32            `json:"seasonPlayCount"`
 	TotalPlayCount  int32            `json:"totalPlayCount"`
 	LastPlayedAt    pgtype.Timestamp `json:"lastPlayedAt"`
+	LastScrapedAt   pgtype.Timestamp `json:"lastScrapedAt"`
 }
 
 func (q *Queries) GetAllUsers(ctx context.Context) ([]GetAllUsersRow, error) {
@@ -127,6 +129,7 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]GetAllUsersRow, error) {
 			&i.SeasonPlayCount,
 			&i.TotalPlayCount,
 			&i.LastPlayedAt,
+			&i.LastScrapedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -136,6 +139,31 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]GetAllUsersRow, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const getSegaCredentials = `-- name: GetSegaCredentials :one
+select
+    sega_id,
+    sega_password
+from users
+where game_name = $1 and tag_line = $2
+`
+
+type GetSegaCredentialsParams struct {
+	GameName string `json:"gameName"`
+	TagLine  string `json:"tagLine"`
+}
+
+type GetSegaCredentialsRow struct {
+	SegaID       string `json:"segaID"`
+	SegaPassword string `json:"segaPassword"`
+}
+
+func (q *Queries) GetSegaCredentials(ctx context.Context, arg GetSegaCredentialsParams) (GetSegaCredentialsRow, error) {
+	row := q.db.QueryRow(ctx, getSegaCredentials, arg.GameName, arg.TagLine)
+	var i GetSegaCredentialsRow
+	err := row.Scan(&i.SegaID, &i.SegaPassword)
+	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
@@ -151,7 +179,8 @@ select
     user_data.rating,
     user_data.season_play_count,
     user_data.total_play_count,
-    user_metadata.last_played_at
+    user_metadata.last_played_at,
+    user_metadata.last_scraped_at
 from users
 inner join (
     select distinct on (user_data.user_id)
@@ -179,6 +208,7 @@ type GetUserByIDRow struct {
 	SeasonPlayCount int32            `json:"seasonPlayCount"`
 	TotalPlayCount  int32            `json:"totalPlayCount"`
 	LastPlayedAt    pgtype.Timestamp `json:"lastPlayedAt"`
+	LastScrapedAt   pgtype.Timestamp `json:"lastScrapedAt"`
 }
 
 func (q *Queries) GetUserByID(ctx context.Context, userID uuid.UUID) (GetUserByIDRow, error) {
@@ -197,6 +227,7 @@ func (q *Queries) GetUserByID(ctx context.Context, userID uuid.UUID) (GetUserByI
 		&i.SeasonPlayCount,
 		&i.TotalPlayCount,
 		&i.LastPlayedAt,
+		&i.LastScrapedAt,
 	)
 	return i, err
 }
@@ -211,7 +242,8 @@ select
     user_data.rating,
     user_data.season_play_count,
     user_data.total_play_count,
-    user_metadata.last_played_at
+    user_metadata.last_played_at,
+    user_metadata.last_scraped_at
 from users
 inner join (
     select distinct on (user_data.user_id)
@@ -241,6 +273,7 @@ type GetUserByMaiIDRow struct {
 	SeasonPlayCount int32            `json:"seasonPlayCount"`
 	TotalPlayCount  int32            `json:"totalPlayCount"`
 	LastPlayedAt    pgtype.Timestamp `json:"lastPlayedAt"`
+	LastScrapedAt   pgtype.Timestamp `json:"lastScrapedAt"`
 }
 
 func (q *Queries) GetUserByMaiID(ctx context.Context, arg GetUserByMaiIDParams) (GetUserByMaiIDRow, error) {
@@ -256,6 +289,7 @@ func (q *Queries) GetUserByMaiID(ctx context.Context, arg GetUserByMaiIDParams) 
 		&i.SeasonPlayCount,
 		&i.TotalPlayCount,
 		&i.LastPlayedAt,
+		&i.LastScrapedAt,
 	)
 	return i, err
 }

@@ -11,9 +11,9 @@ import (
 
 	"github.com/asashakira/maitrack/internal/api/middleware"
 	database "github.com/asashakira/maitrack/internal/database/sqlc"
-	"github.com/asashakira/maitrack/internal/scraper"
 	"github.com/asashakira/maitrack/internal/service"
 	"github.com/asashakira/maitrack/internal/utils"
+	"github.com/asashakira/maitrack/pkg/maimaiclient"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"golang.org/x/crypto/bcrypt"
@@ -37,15 +37,17 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Input validation
+	// TODO: do better
 	if params.Username == "" || params.Password == "" || params.SegaID == "" || params.SegaPassword == "" {
 		utils.RespondWithError(w, 400, "All fields are required")
 		return
 	}
 
-	// Verify SegaID and Password
-	scrapedUserData, scrapeErr := scraper.ScrapeUserData(params.SegaID, params.SegaPassword)
-	if scrapeErr != nil {
-		log.Printf("Failed to scrape user data: %v", scrapeErr)
+	// Try to Login to maimaidx.net to verify
+	m := maimaiclient.New()
+	err := m.Login(params.SegaID, params.SegaPassword)
+	if err != nil {
+		log.Printf("Failed to login to maimai with SEGAID '%s': %s\n", params.SegaID, err)
 		utils.RespondWithError(w, 400, "Invalid SegaID or password")
 		return
 	}
@@ -58,10 +60,10 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Encrypt Sega Password
+	// Encrypt SEGA Password
 	encryptedSegaPassword, err := utils.Encrypt(params.SegaPassword)
 	if err != nil {
-		log.Printf("Error encrypting Sega password: %v", err)
+		log.Printf("Error encrypting SEGA password: %v", err)
 		utils.RespondWithError(w, 500, "Internal Server Error")
 		return
 	}
@@ -83,28 +85,29 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// create user data
-	_, err = h.queries.CreateUserData(r.Context(), database.CreateUserDataParams{
+	// create initial userdata
+	_, createUserDataErr := h.queries.CreateUserData(r.Context(), database.CreateUserDataParams{
 		ID:              uuid.New(),
 		UserID:          user.UserID,
 		GameName:        user.GameName,
 		TagLine:         user.TagLine,
-		Rating:          scrapedUserData.Rating,
-		SeasonPlayCount: scrapedUserData.SeasonPlayCount,
-		TotalPlayCount:  scrapedUserData.TotalPlayCount,
+		Rating:          0,
+		SeasonPlayCount: 0,
+		TotalPlayCount:  0,
 	})
-	if err != nil {
-		errorMessage := fmt.Sprintf("Error creating user data: %s", err)
+	if createUserDataErr != nil {
+		errorMessage := fmt.Sprintf("failed to create user data for user '%s#%s': %s", user.GameName, user.TagLine, createUserDataErr)
 		log.Println(errorMessage)
 		utils.RespondWithError(w, 400, errorMessage)
 		return
 	}
 
-	// create user metadata
-	defaultLastPlayedAtTime, _ := utils.StringToUTCTime("2006-01-02 15:04")
+	// create initial user metadata
+	defaultTime, _ := utils.StringToUTCTime("2006-01-02 15:04")
 	_, err = h.queries.CreateUserMetadata(r.Context(), database.CreateUserMetadataParams{
 		UserID:       user.UserID,
-		LastPlayedAt: pgtype.Timestamp{Time: defaultLastPlayedAtTime, Valid: true},
+		LastPlayedAt: pgtype.Timestamp{Time: defaultTime, Valid: true},
+		LastScrapedAt: pgtype.Timestamp{Time: defaultTime, Valid: true},
 	})
 	if err != nil {
 		errorMessage := fmt.Sprintf("Error Creating UserMetadata: %s", err)
@@ -113,55 +116,50 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate JWT Token
+	// Define JWT claims
 	claims := service.Claims{
 		Username: user.Username,
 		Role:     "user",
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "maitrack",
 			Subject:   user.Username,
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // Token expires in 24 hours
 		},
 	}
 
+	// Generate JWT token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// Sign token with secret key
 	secretKey, err := service.GetSecretKey()
 	if err != nil {
-		log.Printf("Failed to get secret key: %v", err)
-		utils.RespondWithError(w, 500, "Internal Server Error")
+		log.Println("Failed to get secret key:", err)
+		utils.RespondWithError(w, 500, "Internal server error")
 		return
 	}
 
 	tokenString, err := token.SignedString(secretKey)
 	if err != nil {
-		log.Printf("Failed to sign token: %v", err)
-		utils.RespondWithError(w, 500, "Internal Server Error")
+		log.Println("Failed to generate token:", err)
+		utils.RespondWithError(w, 500, "Internal server error")
 		return
 	}
 
-	// Set JWT as an HTTP-only cookie
+	// Set token as an HTTP-only secure cookie
 	http.SetCookie(w, &http.Cookie{
-		Name:     "token",
+		Name:     "auth_token",
 		Value:    tokenString,
-		Path:     "/",
 		HttpOnly: true,
-		// Secure:   true,  // Ensure Secure for HTTPS
-		SameSite: http.SameSiteStrictMode,
-		Expires:  time.Now().Add(time.Hour * 24),
+		// Secure:   true, // Requires HTTPS
+		SameSite: http.SameSiteLaxMode,
+		Path:     "/",
+		MaxAge:   86400, // 1 day
 	})
 
 	// Response Data
 	data := map[string]any{
-		"userID":          user.UserID,
-		"username":        user.Username,
-		"gameName":        user.GameName,
-		"tagLine":         user.TagLine,
-		"rating":          scrapedUserData.Rating,
-		"seasonPlayCount": scrapedUserData.SeasonPlayCount,
-		"totalPlayCount":  scrapedUserData.TotalPlayCount,
-		"lastPlayedAt":    defaultLastPlayedAtTime,
+		"userID":   user.UserID,
+		"username": user.Username,
+		"gameName": user.GameName,
+		"tagLine":  user.TagLine,
 	}
 
 	utils.RespondWithJSON(w, 201, data)

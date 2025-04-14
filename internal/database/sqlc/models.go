@@ -108,8 +108,9 @@ type UserDatum struct {
 }
 
 type UserMetadatum struct {
-	UserID       uuid.UUID        `json:"userID"`
-	LastPlayedAt pgtype.Timestamp `json:"lastPlayedAt"`
-	UpdatedAt    pgtype.Timestamp `json:"updatedAt"`
-	CreatedAt    pgtype.Timestamp `json:"createdAt"`
+	UserID        uuid.UUID        `json:"userID"`
+	LastPlayedAt  pgtype.Timestamp `json:"lastPlayedAt"`
+	LastScrapedAt pgtype.Timestamp `json:"lastScrapedAt"`
+	UpdatedAt     pgtype.Timestamp `json:"updatedAt"`
+	CreatedAt     pgtype.Timestamp `json:"createdAt"`
 }

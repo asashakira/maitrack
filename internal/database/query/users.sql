@@ -26,7 +26,8 @@ select
     user_data.rating,
     user_data.season_play_count,
     user_data.total_play_count,
-    user_metadata.last_played_at
+    user_metadata.last_played_at,
+    user_metadata.last_scraped_at
 from users
 inner join (
     select distinct on (user_data.user_id)
@@ -52,7 +53,8 @@ select
     user_data.rating,
     user_data.season_play_count,
     user_data.total_play_count,
-    user_metadata.last_played_at
+    user_metadata.last_played_at,
+    user_metadata.last_scraped_at
 from users
 inner join (
     select distinct on (user_data.user_id)
@@ -73,6 +75,13 @@ select
 from users
 where username = $1;
 
+-- name: GetSegaCredentials :one
+select
+    sega_id,
+    sega_password
+from users
+where game_name = $1 and tag_line = $2;
+
 -- name: GetUserByMaiID :one
 select
     users.user_id,
@@ -83,7 +92,8 @@ select
     user_data.rating,
     user_data.season_play_count,
     user_data.total_play_count,
-    user_metadata.last_played_at
+    user_metadata.last_played_at,
+    user_metadata.last_scraped_at
 from users
 inner join (
     select distinct on (user_data.user_id)

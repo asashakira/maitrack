@@ -29,6 +29,7 @@ create table user_data (
 create table user_metadata (
     user_id uuid primary key references users (user_id) on delete cascade,
     last_played_at timestamp not null,
+    last_scraped_at timestamp not null,
     updated_at timestamp not null,
     created_at timestamp not null
 );

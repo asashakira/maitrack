@@ -19,14 +19,7 @@ import (
 
 // scrape user scores from maimaidxnet
 // returns nil if nothing to update
-func scrapeScores(queries *database.Queries, segaID, segaPassword string, lastPlayedAt time.Time) ([]database.Score, error) {
-	// Login
-	m := maimaiclient.New()
-	err := m.Login(segaID, segaPassword)
-	if err != nil {
-		return nil, fmt.Errorf("failed to login to maimai: %w", err)
-	}
-
+func scrapeScores(m *maimaiclient.Client, queries *database.Queries, lastPlayedAt time.Time) ([]database.Score, error) {
 	// Fetch records page
 	r, err := m.HTTPClient.Get(maimaiclient.BaseURL + "/record")
 	if err != nil {

@@ -16,24 +16,27 @@ const createUserMetadata = `-- name: CreateUserMetadata :one
 insert into user_metadata (
     user_id,
     last_played_at,
+    last_scraped_at,
     updated_at,
     created_at
 )
-values ($1, $2, now(), now())
-returning user_id, last_played_at, updated_at, created_at
+values ($1, $2, $3, now(), now())
+returning user_id, last_played_at, last_scraped_at, updated_at, created_at
 `
 
 type CreateUserMetadataParams struct {
-	UserID       uuid.UUID        `json:"userID"`
-	LastPlayedAt pgtype.Timestamp `json:"lastPlayedAt"`
+	UserID        uuid.UUID        `json:"userID"`
+	LastPlayedAt  pgtype.Timestamp `json:"lastPlayedAt"`
+	LastScrapedAt pgtype.Timestamp `json:"lastScrapedAt"`
 }
 
 func (q *Queries) CreateUserMetadata(ctx context.Context, arg CreateUserMetadataParams) (UserMetadatum, error) {
-	row := q.db.QueryRow(ctx, createUserMetadata, arg.UserID, arg.LastPlayedAt)
+	row := q.db.QueryRow(ctx, createUserMetadata, arg.UserID, arg.LastPlayedAt, arg.LastScrapedAt)
 	var i UserMetadatum
 	err := row.Scan(
 		&i.UserID,
 		&i.LastPlayedAt,
+		&i.LastScrapedAt,
 		&i.UpdatedAt,
 		&i.CreatedAt,
 	)
@@ -44,6 +47,7 @@ const getUserMetadataByUserID = `-- name: GetUserMetadataByUserID :one
 select
     user_id,
     last_played_at,
+    last_scraped_at,
     updated_at,
     created_at
 from user_metadata
@@ -56,9 +60,62 @@ func (q *Queries) GetUserMetadataByUserID(ctx context.Context, userID uuid.UUID)
 	err := row.Scan(
 		&i.UserID,
 		&i.LastPlayedAt,
+		&i.LastScrapedAt,
 		&i.UpdatedAt,
 		&i.CreatedAt,
 	)
+	return i, err
+}
+
+const updateLastPlayedAt = `-- name: UpdateLastPlayedAt :one
+update user_metadata
+set
+    last_played_at = $2,
+    updated_at = now()
+where user_id = $1
+returning user_id, last_played_at
+`
+
+type UpdateLastPlayedAtParams struct {
+	UserID       uuid.UUID        `json:"userID"`
+	LastPlayedAt pgtype.Timestamp `json:"lastPlayedAt"`
+}
+
+type UpdateLastPlayedAtRow struct {
+	UserID       uuid.UUID        `json:"userID"`
+	LastPlayedAt pgtype.Timestamp `json:"lastPlayedAt"`
+}
+
+func (q *Queries) UpdateLastPlayedAt(ctx context.Context, arg UpdateLastPlayedAtParams) (UpdateLastPlayedAtRow, error) {
+	row := q.db.QueryRow(ctx, updateLastPlayedAt, arg.UserID, arg.LastPlayedAt)
+	var i UpdateLastPlayedAtRow
+	err := row.Scan(&i.UserID, &i.LastPlayedAt)
+	return i, err
+}
+
+const updateLastScrapedAt = `-- name: UpdateLastScrapedAt :one
+update user_metadata
+set
+    last_scraped_at = $2,
+    updated_at = now()
+where user_id = $1
+returning user_id, last_scraped_at
+`
+
+type UpdateLastScrapedAtParams struct {
+	UserID        uuid.UUID        `json:"userID"`
+	LastScrapedAt pgtype.Timestamp `json:"lastScrapedAt"`
+}
+
+type UpdateLastScrapedAtRow struct {
+	UserID        uuid.UUID        `json:"userID"`
+	LastScrapedAt pgtype.Timestamp `json:"lastScrapedAt"`
+}
+
+func (q *Queries) UpdateLastScrapedAt(ctx context.Context, arg UpdateLastScrapedAtParams) (UpdateLastScrapedAtRow, error) {
+	row := q.db.QueryRow(ctx, updateLastScrapedAt, arg.UserID, arg.LastScrapedAt)
+	var i UpdateLastScrapedAtRow
+	err := row.Scan(&i.UserID, &i.LastScrapedAt)
 	return i, err
 }
 
@@ -66,24 +123,27 @@ const updateUserMetadata = `-- name: UpdateUserMetadata :one
 update user_metadata
 set
     last_played_at = $2,
+    last_scraped_at = $3,
     updated_at = now()
 where user_id = $1
-returning user_id, last_played_at, updated_at, created_at
+returning user_id, last_played_at, last_scraped_at
 `
 
 type UpdateUserMetadataParams struct {
-	UserID       uuid.UUID        `json:"userID"`
-	LastPlayedAt pgtype.Timestamp `json:"lastPlayedAt"`
+	UserID        uuid.UUID        `json:"userID"`
+	LastPlayedAt  pgtype.Timestamp `json:"lastPlayedAt"`
+	LastScrapedAt pgtype.Timestamp `json:"lastScrapedAt"`
 }
 
-func (q *Queries) UpdateUserMetadata(ctx context.Context, arg UpdateUserMetadataParams) (UserMetadatum, error) {
-	row := q.db.QueryRow(ctx, updateUserMetadata, arg.UserID, arg.LastPlayedAt)
-	var i UserMetadatum
-	err := row.Scan(
-		&i.UserID,
-		&i.LastPlayedAt,
-		&i.UpdatedAt,
-		&i.CreatedAt,
-	)
+type UpdateUserMetadataRow struct {
+	UserID        uuid.UUID        `json:"userID"`
+	LastPlayedAt  pgtype.Timestamp `json:"lastPlayedAt"`
+	LastScrapedAt pgtype.Timestamp `json:"lastScrapedAt"`
+}
+
+func (q *Queries) UpdateUserMetadata(ctx context.Context, arg UpdateUserMetadataParams) (UpdateUserMetadataRow, error) {
+	row := q.db.QueryRow(ctx, updateUserMetadata, arg.UserID, arg.LastPlayedAt, arg.LastScrapedAt)
+	var i UpdateUserMetadataRow
+	err := row.Scan(&i.UserID, &i.LastPlayedAt, &i.LastScrapedAt)
 	return i, err
 }

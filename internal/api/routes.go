@@ -27,11 +27,12 @@ func SetUpRoutes(r *chi.Mux, h *handler.Handler, m *middleware.Middleware) {
 	v1Router.Post("/auth/login", h.Login)
 	v1Router.Post("/auth/logout", h.Logout)
 	v1Router.Get("/auth/me", m.Auth(h.GetMe))
+	v1Router.Get("/users/healthz", m.Auth(h.GetUserHealthCheck))
 
 	// user routes
 	v1Router.Get("/users", h.GetAllUsers)
 	v1Router.Get("/users/by-mai-id/{maiID}", h.GetUserByMaiID)
-	v1Router.Get("/users/healthz", m.Auth(h.GetUserHealthCheck))
+	v1Router.Post("/users/by-mai-id/{maiID}/update", h.UpdateUserByMaiID)
 
 	// songs
 	v1Router.Get("/songs", h.GetAllSongs)
