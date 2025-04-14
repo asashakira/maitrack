@@ -9,8 +9,8 @@ import (
 
 func SetUpRoutes(r *chi.Mux, h *handler.Handler, m *middleware.Middleware) {
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://*", "https://*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedOrigins:   []string{"https://maitrack.asashakira.dev", "http://localhost:3000"},
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
