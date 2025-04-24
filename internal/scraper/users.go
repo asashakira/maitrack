@@ -19,7 +19,7 @@ import (
 // scrapes user data and scores from maimaidxnet
 // then update database
 func ScrapeAllUsers(pool *pgxpool.Pool) {
-	log.Println("ScrapeAllUsers DONE")
+	log.Println("ScrapeAllUsers START")
 
 	queries := database.New(pool)
 
