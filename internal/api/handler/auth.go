@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -105,8 +106,8 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	// create initial user metadata
 	defaultTime, _ := utils.StringToUTCTime("2006-01-02 15:04")
 	_, err = h.queries.CreateUserMetadata(r.Context(), database.CreateUserMetadataParams{
-		UserID:       user.UserID,
-		LastPlayedAt: pgtype.Timestamp{Time: defaultTime, Valid: true},
+		UserID:        user.UserID,
+		LastPlayedAt:  pgtype.Timestamp{Time: defaultTime, Valid: true},
 		LastScrapedAt: pgtype.Timestamp{Time: defaultTime, Valid: true},
 	})
 	if err != nil {
@@ -147,11 +148,11 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "auth_token",
 		Value:    tokenString,
-		HttpOnly: true,
-		// Secure:   true, // Requires HTTPS
-		SameSite: http.SameSiteLaxMode,
 		Path:     "/",
-		MaxAge:   86400, // 1 day
+		HttpOnly: true,
+		Secure:   os.Getenv("ENV") == "production",
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   86400,
 	})
 
 	// Response Data
@@ -225,11 +226,11 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "auth_token",
 		Value:    tokenString,
-		HttpOnly: true,
-		// Secure:   true, // Requires HTTPS
-		SameSite: http.SameSiteLaxMode,
 		Path:     "/",
-		MaxAge:   86400, // 1 day
+		HttpOnly: true,
+		Secure:   os.Getenv("ENV") == "production",
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   86400,
 	})
 
 	// Respond with user details (excluding token)
@@ -246,12 +247,12 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "auth_token",
 		Value:    "",
-		Expires:  time.Unix(0, 0), // Expire immediately
-		MaxAge:   -1,              // Force immediate expiration
 		Path:     "/",
 		HttpOnly: true,
-		// Secure:   true, // Requires HTTPS
+		Secure:   os.Getenv("ENV") == "production",
 		SameSite: http.SameSiteLaxMode,
+		MaxAge:   -1,              // Force immediate expiration
+		Expires:  time.Unix(0, 0), // Expire immediately
 	})
 
 	utils.RespondWithJSON(w, 200, map[string]string{
