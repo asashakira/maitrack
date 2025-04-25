@@ -120,6 +120,8 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	// Define JWT claims
 	claims := service.Claims{
 		Username: user.Username,
+		GameName: user.GameName,
+		TagLine:  user.TagLine,
 		Role:     "user",
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "maitrack",
@@ -198,6 +200,8 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	// Define JWT claims
 	claims := service.Claims{
 		Username: user.Username,
+		GameName: user.GameName,
+		TagLine:  user.TagLine,
 		Role:     "user",
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "maitrack",
@@ -268,6 +272,8 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 
 	data := map[string]any{
 		"username": user.Username,
+		"gameName": user.GameName,
+		"tagLine":  user.TagLine,
 		"role":     user.Role,
 	}
 

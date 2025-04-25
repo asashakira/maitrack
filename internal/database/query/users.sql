@@ -71,6 +71,8 @@ where users.user_id = $1;
 -- name: GetUserByUsername :one
 select
     username,
+    game_name,
+    tag_line,
     password
 from users
 where username = $1;

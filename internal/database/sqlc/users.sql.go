@@ -297,6 +297,8 @@ func (q *Queries) GetUserByMaiID(ctx context.Context, arg GetUserByMaiIDParams) 
 const getUserByUsername = `-- name: GetUserByUsername :one
 select
     username,
+    game_name,
+    tag_line,
     password
 from users
 where username = $1
@@ -304,13 +306,20 @@ where username = $1
 
 type GetUserByUsernameRow struct {
 	Username string `json:"username"`
+	GameName string `json:"gameName"`
+	TagLine  string `json:"tagLine"`
 	Password string `json:"password"`
 }
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (GetUserByUsernameRow, error) {
 	row := q.db.QueryRow(ctx, getUserByUsername, username)
 	var i GetUserByUsernameRow
-	err := row.Scan(&i.Username, &i.Password)
+	err := row.Scan(
+		&i.Username,
+		&i.GameName,
+		&i.TagLine,
+		&i.Password,
+	)
 	return i, err
 }
 
