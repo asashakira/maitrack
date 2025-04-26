@@ -95,7 +95,7 @@ func (h *Handler) UpdateUserByMaiID(w http.ResponseWriter, r *http.Request) {
 
 	segaCreds, err := h.queries.GetSegaCredentials(r.Context(), database.GetSegaCredentialsParams{
 		GameName: gameName,
-		TagLine: tagLine,
+		TagLine:  tagLine,
 	})
 	if err != nil {
 		errorMessage := fmt.Sprintf("GetSegaCredentials error: %s", err)
@@ -104,15 +104,20 @@ func (h *Handler) UpdateUserByMaiID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	decryptedSegaPassword, decryptErr := utils.Decrypt(segaCreds.SegaPassword)
+	decryptedSegaID, decryptErr := utils.Decrypt(segaCreds.SegaID)
 	if decryptErr != nil {
-		log.Printf("failed to decrypt sega password: %s", decryptErr)
+		log.Printf("failed to decrypt SEGA ID: %s", decryptErr)
 		utils.RespondWithError(w, 500, "Internal Server Error")
 		return
 	}
-
+	decryptedSegaPassword, decryptErr := utils.Decrypt(segaCreds.SegaPassword)
+	if decryptErr != nil {
+		log.Printf("failed to decrypt SEGA password: %s", decryptErr)
+		utils.RespondWithError(w, 500, "Internal Server Error")
+		return
+	}
 	m := maimaiclient.New()
-	loginErr := m.Login(segaCreds.SegaID, decryptedSegaPassword)
+	loginErr := m.Login(decryptedSegaID, decryptedSegaPassword)
 	if loginErr != nil {
 		log.Printf("Failed to login to maimai with SEGAID '%s': %s\n", segaCreds.SegaID, err)
 		utils.RespondWithError(w, 400, "Invalid SegaID or password")

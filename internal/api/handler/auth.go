@@ -61,7 +61,13 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Encrypt SEGA Password
+	// Encrypt SEGA Creds
+	encryptedSegaID, err := utils.Encrypt(params.SegaID)
+	if err != nil {
+		log.Printf("Error encrypting SEGA ID: %v", err)
+		utils.RespondWithError(w, 500, "Internal Server Error")
+		return
+	}
 	encryptedSegaPassword, err := utils.Encrypt(params.SegaPassword)
 	if err != nil {
 		log.Printf("Error encrypting SEGA password: %v", err)
@@ -74,7 +80,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		UserID:       uuid.New(),
 		Username:     params.Username,
 		Password:     string(hashedPassword),
-		SegaID:       params.SegaID,
+		SegaID:       encryptedSegaID,
 		SegaPassword: encryptedSegaPassword,
 		GameName:     params.GameName,
 		TagLine:      params.TagLine,

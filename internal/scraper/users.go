@@ -29,13 +29,18 @@ func ScrapeAllUsers(pool *pgxpool.Pool) {
 	}
 
 	for _, u := range users {
+		decryptedSegaID, decryptErr := utils.Decrypt(u.SegaID)
+		if decryptErr != nil {
+			log.Printf("failed to decrypt SEGA ID: %s", decryptErr)
+			return
+		}
 		decryptedSegaPassword, decryptErr := utils.Decrypt(u.SegaPassword)
 		if decryptErr != nil {
-			log.Printf("failed to decrypt sega password: %s", decryptErr)
+			log.Printf("failed to decrypt SEGA password: %s", decryptErr)
 			return
 		}
 		m := maimaiclient.New()
-		err := m.Login(u.SegaID, decryptedSegaPassword)
+		err := m.Login(decryptedSegaID, decryptedSegaPassword)
 		if err != nil {
 			log.Printf("Failed to login to maimai with SEGA ID '%s': %s\n", u.SegaID, err)
 			return
