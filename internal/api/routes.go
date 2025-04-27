@@ -36,6 +36,7 @@ func SetUpRoutes(r *chi.Mux, h *handler.Handler, m *middleware.Middleware) {
 
 	// songs
 	v1Router.Get("/songs", h.GetAllSongs)
+	v1Router.Get("/songs/by-id/{id}", h.GetSongByID)
 	v1Router.Get("/songs/by-altkey/{altkey}", h.GetSongByAltKey)
 	v1Router.Get("/songs/by-title/{title}", h.GetSongsByTitle)
 	v1Router.Post("/songs", h.CreateSong)

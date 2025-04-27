@@ -50,7 +50,7 @@ select
     created_at
 from songs;
 
--- name: GetSongBySongID :one
+-- name: GetSongByID :one
 select
     song_id,
     alt_key,

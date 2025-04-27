@@ -88,6 +88,31 @@ func (h *Handler) GetAllSongs(w http.ResponseWriter, r *http.Request) {
 	utils.RespondWithJSON(w, 200, songs)
 }
 
+func (h *Handler) GetSongByID(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		utils.RespondWithError(w, 400, fmt.Sprintf("error parsing songID: %s", err))
+		return
+	}
+
+	song, err := h.queries.GetSongByID(r.Context(), id)
+	if err != nil {
+		// Handle "no rows found"
+		if errors.Is(err, pgx.ErrNoRows) {
+			errorMessage := fmt.Sprintf("No song found with provided id '%s': %s", id, err)
+			log.Println(errorMessage)
+			utils.RespondWithError(w, 404, errorMessage)
+			return
+		}
+		// Handle other errors
+		errorMessage := fmt.Sprintf("GetSongByID %v", err)
+		log.Println(errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
+		return
+	}
+	utils.RespondWithJSON(w, 200, song)
+}
+
 // get song using altkey
 // altkey is made by
 // combining title and artist
@@ -170,7 +195,7 @@ func (h *Handler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch existing song
-	song, err := h.queries.GetSongBySongID(r.Context(), params.SongID)
+	song, err := h.queries.GetSongByID(r.Context(), params.SongID)
 	if err != nil {
 		errorMessage := fmt.Sprintf("song not found %v", err)
 		log.Println(errorMessage)

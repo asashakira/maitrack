@@ -193,7 +193,7 @@ func (q *Queries) GetSongByAltKey(ctx context.Context, altKey string) (Song, err
 	return i, err
 }
 
-const getSongBySongID = `-- name: GetSongBySongID :one
+const getSongByID = `-- name: GetSongByID :one
 select
     song_id,
     alt_key,
@@ -213,8 +213,8 @@ from songs
 where song_id = $1
 `
 
-func (q *Queries) GetSongBySongID(ctx context.Context, songID uuid.UUID) (Song, error) {
-	row := q.db.QueryRow(ctx, getSongBySongID, songID)
+func (q *Queries) GetSongByID(ctx context.Context, songID uuid.UUID) (Song, error) {
+	row := q.db.QueryRow(ctx, getSongByID, songID)
 	var i Song
 	err := row.Scan(
 		&i.SongID,
