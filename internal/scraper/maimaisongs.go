@@ -264,4 +264,5 @@ var versionMap = map[string]string{
 	"240": "BUDDiES",
 	"245": "BUDDiES PLUS",
 	"250": "PRiSM",
+	"255": "PRiSM PLUS",
 }
