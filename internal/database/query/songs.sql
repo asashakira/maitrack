@@ -48,7 +48,8 @@ select
     delete_date,
     updated_at,
     created_at
-from songs;
+from songs
+order by release_date desc;
 
 -- name: GetSongByID :one
 select

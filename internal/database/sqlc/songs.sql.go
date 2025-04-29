@@ -114,6 +114,7 @@ select
     updated_at,
     created_at
 from songs
+order by release_date desc
 `
 
 func (q *Queries) GetAllSongs(ctx context.Context) ([]Song, error) {
