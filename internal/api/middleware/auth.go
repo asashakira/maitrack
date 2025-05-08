@@ -64,8 +64,6 @@ func (m *Middleware) Auth(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		log.Printf("Authenticated user: %s, Role: %s\n", claims.Username, claims.Role)
-
 		// Store claims in context for later use
 		ctx := context.WithValue(r.Context(), UserContextKey, claims)
 
