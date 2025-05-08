@@ -79,6 +79,7 @@ func (h *Handler) CreateSong(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) GetAllSongs(w http.ResponseWriter, r *http.Request) {
 	songs, err := h.queries.GetAllSongs(r.Context())
+
 	if err != nil {
 		errorMessage := fmt.Sprintf("GetAllSongs %v", err)
 		log.Println(errorMessage)
