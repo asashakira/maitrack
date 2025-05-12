@@ -112,7 +112,7 @@ func upsertSong(queries *sqlc.Queries, ms maimaisong) (sqlc.Song, error) {
 				Artist:      ms.Artist,
 				Genre:       ms.Genre,
 				Bpm:         "",
-				ImageUrl:    "https://maimaidx.jp/maimai-mobile/img/Music/" + ms.ImageUrl,
+				ImageUrl:    ms.ImageUrl,
 				Version:     versionMap[ms.Version[0:3]],
 				IsUtage:     ms.Genre == "宴会場",
 				IsAvailable: true,
@@ -121,6 +121,12 @@ func upsertSong(queries *sqlc.Queries, ms maimaisong) (sqlc.Song, error) {
 			if createSongErr != nil {
 				return sqlc.Song{}, fmt.Errorf("failed to create song: %w", createSongErr)
 			}
+
+			uploadErr := utils.UploadImageToS3("https://maimaidx.jp/maimai-mobile/img/Music/" + ms.ImageUrl)
+			if uploadErr != nil {
+				return sqlc.Song{}, fmt.Errorf("failed to upload image to S3: %w", uploadErr)
+			}
+
 			// return newly created song
 			return newSong, nil
 		}
@@ -136,7 +142,7 @@ func upsertSong(queries *sqlc.Queries, ms maimaisong) (sqlc.Song, error) {
 		Artist:      ms.Artist,
 		Genre:       ms.Genre,
 		Bpm:         "",
-		ImageUrl:    "https://maimaidx.jp/maimai-mobile/img/Music/" + ms.ImageUrl,
+		ImageUrl:    ms.ImageUrl,
 		Version:     versionMap[ms.Version[0:3]],
 		IsUtage:     ms.Genre == "宴会場",
 		IsAvailable: true,
