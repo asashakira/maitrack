@@ -1,7 +1,6 @@
 -- name: CreateSong :one
 insert into songs (
     song_id,
-    alt_key,
     title,
     artist,
     genre,
@@ -10,32 +9,19 @@ insert into songs (
     version,
     is_utage,
     is_available,
+    is_new,
+    sort,
     release_date,
     delete_date,
     updated_at,
     created_at
 )
-values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, now(), now())
-returning
-    song_id,
-    alt_key,
-    title,
-    artist,
-    genre,
-    bpm,
-    image_url,
-    version,
-    is_utage,
-    is_available,
-    release_date,
-    delete_date,
-    updated_at,
-    created_at;
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, now(), now())
+returning *;
 
 -- name: GetAllSongs :many
 select
     songs.song_id,
-    songs.alt_key,
     songs.title,
     songs.artist,
     songs.genre,
@@ -44,6 +30,7 @@ select
     songs.version,
     songs.is_utage,
     songs.is_available,
+    songs.is_new,
     songs.release_date,
     songs.delete_date,
     coalesce(
@@ -72,12 +59,11 @@ select
         '[]'
     ) as beatmaps
 from songs
-order by songs.release_date desc;
+order by songs.release_date desc, songs.sort desc;
 
 -- name: GetSongByID :one
 select
     songs.song_id,
-    songs.alt_key,
     songs.title,
     songs.artist,
     songs.genre,
@@ -86,6 +72,7 @@ select
     songs.version,
     songs.is_utage,
     songs.is_available,
+    songs.is_new,
     songs.release_date,
     songs.delete_date,
     coalesce(
@@ -116,91 +103,31 @@ select
 from songs
 where songs.song_id = $1;
 
--- name: GetSongByAltKey :one
-select
-    song_id,
-    alt_key,
-    title,
-    artist,
-    genre,
-    bpm,
-    image_url,
-    version,
-    is_utage,
-    is_available,
-    release_date,
-    delete_date,
-    updated_at,
-    created_at
-from songs
-where alt_key = $1;
-
 -- name: GetSongsByTitle :many
-select
-    song_id,
-    alt_key,
-    title,
-    artist,
-    genre,
-    bpm,
-    image_url,
-    version,
-    is_utage,
-    is_available,
-    release_date,
-    delete_date,
-    updated_at,
-    created_at
+select *
 from songs
 where title = $1;
 
 -- name: GetSongByTitleAndArtist :one
-select
-    song_id,
-    alt_key,
-    title,
-    artist,
-    genre,
-    bpm,
-    image_url,
-    version,
-    is_utage,
-    is_available,
-    release_date,
-    delete_date,
-    updated_at,
-    created_at
+select *
 from songs
 where title = $1 and artist = $2;
 
 -- name: UpdateSong :one
 update songs
 set
-    alt_key = $2,
     title = $1,
-    artist = $3,
-    genre = $4,
-    bpm = $5,
-    image_url = $6,
-    version = $7,
-    is_utage = $8,
-    is_available = $9,
-    release_date = $10,
-    delete_date = $11,
+    artist = $2,
+    genre = $3,
+    bpm = $4,
+    image_url = $5,
+    version = $6,
+    is_utage = $7,
+    is_available = $8,
+    is_new = $9,
+    sort = $10,
+    release_date = $11,
+    delete_date = $12,
     updated_at = now()
-where song_id = $12
-returning
-    song_id,
-    alt_key,
-    title,
-    artist,
-    genre,
-    bpm,
-    image_url,
-    version,
-    is_utage,
-    is_available,
-    release_date,
-    delete_date,
-    updated_at,
-    created_at;
+where song_id = $13
+returning *;

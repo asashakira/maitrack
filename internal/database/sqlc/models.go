@@ -69,15 +69,16 @@ type Score struct {
 
 type Song struct {
 	SongID      uuid.UUID        `json:"songID"`
-	AltKey      string           `json:"altKey"`
 	Title       string           `json:"title"`
 	Artist      string           `json:"artist"`
 	Genre       string           `json:"genre"`
 	Bpm         string           `json:"bpm"`
 	ImageUrl    string           `json:"imageUrl"`
 	Version     string           `json:"version"`
+	Sort        string           `json:"sort"`
 	IsUtage     bool             `json:"isUtage"`
 	IsAvailable bool             `json:"isAvailable"`
+	IsNew       bool             `json:"isNew"`
 	ReleaseDate pgtype.Date      `json:"releaseDate"`
 	DeleteDate  pgtype.Date      `json:"deleteDate"`
 	UpdatedAt   pgtype.Timestamp `json:"updatedAt"`

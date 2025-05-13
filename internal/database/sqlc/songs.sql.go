@@ -15,7 +15,6 @@ import (
 const createSong = `-- name: CreateSong :one
 insert into songs (
     song_id,
-    alt_key,
     title,
     artist,
     genre,
@@ -24,32 +23,19 @@ insert into songs (
     version,
     is_utage,
     is_available,
+    is_new,
+    sort,
     release_date,
     delete_date,
     updated_at,
     created_at
 )
-values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, now(), now())
-returning
-    song_id,
-    alt_key,
-    title,
-    artist,
-    genre,
-    bpm,
-    image_url,
-    version,
-    is_utage,
-    is_available,
-    release_date,
-    delete_date,
-    updated_at,
-    created_at
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, now(), now())
+returning song_id, title, artist, genre, bpm, image_url, version, sort, is_utage, is_available, is_new, release_date, delete_date, updated_at, created_at
 `
 
 type CreateSongParams struct {
 	SongID      uuid.UUID   `json:"songID"`
-	AltKey      string      `json:"altKey"`
 	Title       string      `json:"title"`
 	Artist      string      `json:"artist"`
 	Genre       string      `json:"genre"`
@@ -58,6 +44,8 @@ type CreateSongParams struct {
 	Version     string      `json:"version"`
 	IsUtage     bool        `json:"isUtage"`
 	IsAvailable bool        `json:"isAvailable"`
+	IsNew       bool        `json:"isNew"`
+	Sort        string      `json:"sort"`
 	ReleaseDate pgtype.Date `json:"releaseDate"`
 	DeleteDate  pgtype.Date `json:"deleteDate"`
 }
@@ -65,7 +53,6 @@ type CreateSongParams struct {
 func (q *Queries) CreateSong(ctx context.Context, arg CreateSongParams) (Song, error) {
 	row := q.db.QueryRow(ctx, createSong,
 		arg.SongID,
-		arg.AltKey,
 		arg.Title,
 		arg.Artist,
 		arg.Genre,
@@ -74,21 +61,24 @@ func (q *Queries) CreateSong(ctx context.Context, arg CreateSongParams) (Song, e
 		arg.Version,
 		arg.IsUtage,
 		arg.IsAvailable,
+		arg.IsNew,
+		arg.Sort,
 		arg.ReleaseDate,
 		arg.DeleteDate,
 	)
 	var i Song
 	err := row.Scan(
 		&i.SongID,
-		&i.AltKey,
 		&i.Title,
 		&i.Artist,
 		&i.Genre,
 		&i.Bpm,
 		&i.ImageUrl,
 		&i.Version,
+		&i.Sort,
 		&i.IsUtage,
 		&i.IsAvailable,
+		&i.IsNew,
 		&i.ReleaseDate,
 		&i.DeleteDate,
 		&i.UpdatedAt,
@@ -100,7 +90,6 @@ func (q *Queries) CreateSong(ctx context.Context, arg CreateSongParams) (Song, e
 const getAllSongs = `-- name: GetAllSongs :many
 select
     songs.song_id,
-    songs.alt_key,
     songs.title,
     songs.artist,
     songs.genre,
@@ -109,6 +98,7 @@ select
     songs.version,
     songs.is_utage,
     songs.is_available,
+    songs.is_new,
     songs.release_date,
     songs.delete_date,
     coalesce(
@@ -137,12 +127,11 @@ select
         '[]'
     ) as beatmaps
 from songs
-order by songs.release_date desc
+order by songs.release_date desc, songs.sort desc
 `
 
 type GetAllSongsRow struct {
 	SongID      uuid.UUID   `json:"songID"`
-	AltKey      string      `json:"altKey"`
 	Title       string      `json:"title"`
 	Artist      string      `json:"artist"`
 	Genre       string      `json:"genre"`
@@ -151,6 +140,7 @@ type GetAllSongsRow struct {
 	Version     string      `json:"version"`
 	IsUtage     bool        `json:"isUtage"`
 	IsAvailable bool        `json:"isAvailable"`
+	IsNew       bool        `json:"isNew"`
 	ReleaseDate pgtype.Date `json:"releaseDate"`
 	DeleteDate  pgtype.Date `json:"deleteDate"`
 	Beatmaps    interface{} `json:"beatmaps"`
@@ -167,7 +157,6 @@ func (q *Queries) GetAllSongs(ctx context.Context) ([]GetAllSongsRow, error) {
 		var i GetAllSongsRow
 		if err := rows.Scan(
 			&i.SongID,
-			&i.AltKey,
 			&i.Title,
 			&i.Artist,
 			&i.Genre,
@@ -176,6 +165,7 @@ func (q *Queries) GetAllSongs(ctx context.Context) ([]GetAllSongsRow, error) {
 			&i.Version,
 			&i.IsUtage,
 			&i.IsAvailable,
+			&i.IsNew,
 			&i.ReleaseDate,
 			&i.DeleteDate,
 			&i.Beatmaps,
@@ -190,52 +180,9 @@ func (q *Queries) GetAllSongs(ctx context.Context) ([]GetAllSongsRow, error) {
 	return items, nil
 }
 
-const getSongByAltKey = `-- name: GetSongByAltKey :one
-select
-    song_id,
-    alt_key,
-    title,
-    artist,
-    genre,
-    bpm,
-    image_url,
-    version,
-    is_utage,
-    is_available,
-    release_date,
-    delete_date,
-    updated_at,
-    created_at
-from songs
-where alt_key = $1
-`
-
-func (q *Queries) GetSongByAltKey(ctx context.Context, altKey string) (Song, error) {
-	row := q.db.QueryRow(ctx, getSongByAltKey, altKey)
-	var i Song
-	err := row.Scan(
-		&i.SongID,
-		&i.AltKey,
-		&i.Title,
-		&i.Artist,
-		&i.Genre,
-		&i.Bpm,
-		&i.ImageUrl,
-		&i.Version,
-		&i.IsUtage,
-		&i.IsAvailable,
-		&i.ReleaseDate,
-		&i.DeleteDate,
-		&i.UpdatedAt,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
 const getSongByID = `-- name: GetSongByID :one
 select
     songs.song_id,
-    songs.alt_key,
     songs.title,
     songs.artist,
     songs.genre,
@@ -244,6 +191,7 @@ select
     songs.version,
     songs.is_utage,
     songs.is_available,
+    songs.is_new,
     songs.release_date,
     songs.delete_date,
     coalesce(
@@ -277,7 +225,6 @@ where songs.song_id = $1
 
 type GetSongByIDRow struct {
 	SongID      uuid.UUID   `json:"songID"`
-	AltKey      string      `json:"altKey"`
 	Title       string      `json:"title"`
 	Artist      string      `json:"artist"`
 	Genre       string      `json:"genre"`
@@ -286,6 +233,7 @@ type GetSongByIDRow struct {
 	Version     string      `json:"version"`
 	IsUtage     bool        `json:"isUtage"`
 	IsAvailable bool        `json:"isAvailable"`
+	IsNew       bool        `json:"isNew"`
 	ReleaseDate pgtype.Date `json:"releaseDate"`
 	DeleteDate  pgtype.Date `json:"deleteDate"`
 	Beatmaps    interface{} `json:"beatmaps"`
@@ -296,7 +244,6 @@ func (q *Queries) GetSongByID(ctx context.Context, songID uuid.UUID) (GetSongByI
 	var i GetSongByIDRow
 	err := row.Scan(
 		&i.SongID,
-		&i.AltKey,
 		&i.Title,
 		&i.Artist,
 		&i.Genre,
@@ -305,6 +252,7 @@ func (q *Queries) GetSongByID(ctx context.Context, songID uuid.UUID) (GetSongByI
 		&i.Version,
 		&i.IsUtage,
 		&i.IsAvailable,
+		&i.IsNew,
 		&i.ReleaseDate,
 		&i.DeleteDate,
 		&i.Beatmaps,
@@ -313,21 +261,7 @@ func (q *Queries) GetSongByID(ctx context.Context, songID uuid.UUID) (GetSongByI
 }
 
 const getSongByTitleAndArtist = `-- name: GetSongByTitleAndArtist :one
-select
-    song_id,
-    alt_key,
-    title,
-    artist,
-    genre,
-    bpm,
-    image_url,
-    version,
-    is_utage,
-    is_available,
-    release_date,
-    delete_date,
-    updated_at,
-    created_at
+select song_id, title, artist, genre, bpm, image_url, version, sort, is_utage, is_available, is_new, release_date, delete_date, updated_at, created_at
 from songs
 where title = $1 and artist = $2
 `
@@ -342,15 +276,16 @@ func (q *Queries) GetSongByTitleAndArtist(ctx context.Context, arg GetSongByTitl
 	var i Song
 	err := row.Scan(
 		&i.SongID,
-		&i.AltKey,
 		&i.Title,
 		&i.Artist,
 		&i.Genre,
 		&i.Bpm,
 		&i.ImageUrl,
 		&i.Version,
+		&i.Sort,
 		&i.IsUtage,
 		&i.IsAvailable,
+		&i.IsNew,
 		&i.ReleaseDate,
 		&i.DeleteDate,
 		&i.UpdatedAt,
@@ -360,21 +295,7 @@ func (q *Queries) GetSongByTitleAndArtist(ctx context.Context, arg GetSongByTitl
 }
 
 const getSongsByTitle = `-- name: GetSongsByTitle :many
-select
-    song_id,
-    alt_key,
-    title,
-    artist,
-    genre,
-    bpm,
-    image_url,
-    version,
-    is_utage,
-    is_available,
-    release_date,
-    delete_date,
-    updated_at,
-    created_at
+select song_id, title, artist, genre, bpm, image_url, version, sort, is_utage, is_available, is_new, release_date, delete_date, updated_at, created_at
 from songs
 where title = $1
 `
@@ -390,15 +311,16 @@ func (q *Queries) GetSongsByTitle(ctx context.Context, title string) ([]Song, er
 		var i Song
 		if err := rows.Scan(
 			&i.SongID,
-			&i.AltKey,
 			&i.Title,
 			&i.Artist,
 			&i.Genre,
 			&i.Bpm,
 			&i.ImageUrl,
 			&i.Version,
+			&i.Sort,
 			&i.IsUtage,
 			&i.IsAvailable,
+			&i.IsNew,
 			&i.ReleaseDate,
 			&i.DeleteDate,
 			&i.UpdatedAt,
@@ -417,39 +339,25 @@ func (q *Queries) GetSongsByTitle(ctx context.Context, title string) ([]Song, er
 const updateSong = `-- name: UpdateSong :one
 update songs
 set
-    alt_key = $2,
     title = $1,
-    artist = $3,
-    genre = $4,
-    bpm = $5,
-    image_url = $6,
-    version = $7,
-    is_utage = $8,
-    is_available = $9,
-    release_date = $10,
-    delete_date = $11,
+    artist = $2,
+    genre = $3,
+    bpm = $4,
+    image_url = $5,
+    version = $6,
+    is_utage = $7,
+    is_available = $8,
+    is_new = $9,
+    sort = $10,
+    release_date = $11,
+    delete_date = $12,
     updated_at = now()
-where song_id = $12
-returning
-    song_id,
-    alt_key,
-    title,
-    artist,
-    genre,
-    bpm,
-    image_url,
-    version,
-    is_utage,
-    is_available,
-    release_date,
-    delete_date,
-    updated_at,
-    created_at
+where song_id = $13
+returning song_id, title, artist, genre, bpm, image_url, version, sort, is_utage, is_available, is_new, release_date, delete_date, updated_at, created_at
 `
 
 type UpdateSongParams struct {
 	Title       string      `json:"title"`
-	AltKey      string      `json:"altKey"`
 	Artist      string      `json:"artist"`
 	Genre       string      `json:"genre"`
 	Bpm         string      `json:"bpm"`
@@ -457,6 +365,8 @@ type UpdateSongParams struct {
 	Version     string      `json:"version"`
 	IsUtage     bool        `json:"isUtage"`
 	IsAvailable bool        `json:"isAvailable"`
+	IsNew       bool        `json:"isNew"`
+	Sort        string      `json:"sort"`
 	ReleaseDate pgtype.Date `json:"releaseDate"`
 	DeleteDate  pgtype.Date `json:"deleteDate"`
 	SongID      uuid.UUID   `json:"songID"`
@@ -465,7 +375,6 @@ type UpdateSongParams struct {
 func (q *Queries) UpdateSong(ctx context.Context, arg UpdateSongParams) (Song, error) {
 	row := q.db.QueryRow(ctx, updateSong,
 		arg.Title,
-		arg.AltKey,
 		arg.Artist,
 		arg.Genre,
 		arg.Bpm,
@@ -473,6 +382,8 @@ func (q *Queries) UpdateSong(ctx context.Context, arg UpdateSongParams) (Song, e
 		arg.Version,
 		arg.IsUtage,
 		arg.IsAvailable,
+		arg.IsNew,
+		arg.Sort,
 		arg.ReleaseDate,
 		arg.DeleteDate,
 		arg.SongID,
@@ -480,15 +391,16 @@ func (q *Queries) UpdateSong(ctx context.Context, arg UpdateSongParams) (Song, e
 	var i Song
 	err := row.Scan(
 		&i.SongID,
-		&i.AltKey,
 		&i.Title,
 		&i.Artist,
 		&i.Genre,
 		&i.Bpm,
 		&i.ImageUrl,
 		&i.Version,
+		&i.Sort,
 		&i.IsUtage,
 		&i.IsAvailable,
+		&i.IsNew,
 		&i.ReleaseDate,
 		&i.DeleteDate,
 		&i.UpdatedAt,
