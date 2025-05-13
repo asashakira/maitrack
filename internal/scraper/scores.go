@@ -174,6 +174,7 @@ func scrapeScore(queries *database.Queries, m *maimaiclient.Client, recordID str
 
 	// imageURL
 	imageURL := doc.Find(`img.music_img`).AttrOr(`src`, "Not Found")
+	imageURL = strings.TrimPrefix(imageURL, "https://maimaidx.jp/maimai-mobile/img/Music/")
 
 	// ids
 	songID, beatmapID, err := getSongAndBeatmapID(queries, title, difficulty, beatmapType, imageURL)
