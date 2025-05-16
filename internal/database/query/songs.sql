@@ -1,6 +1,7 @@
 -- name: CreateSong :one
 insert into songs (
     song_id,
+    alt_key,
     title,
     artist,
     genre,
@@ -16,7 +17,7 @@ insert into songs (
     updated_at,
     created_at
 )
-values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, now(), now())
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, now(), now())
 returning *;
 
 -- name: GetAllSongs :many
@@ -113,21 +114,27 @@ select *
 from songs
 where title = $1 and artist = $2;
 
+-- name: GetSongByAltKey :one
+select *
+from songs
+where alt_key = $1;
+
 -- name: UpdateSong :one
 update songs
 set
-    title = $1,
-    artist = $2,
-    genre = $3,
-    bpm = $4,
-    image_url = $5,
-    version = $6,
-    is_utage = $7,
-    is_available = $8,
-    is_new = $9,
-    sort = $10,
-    release_date = $11,
-    delete_date = $12,
+    alt_key = $1,
+    title = $2,
+    artist = $3,
+    genre = $4,
+    bpm = $5,
+    image_url = $6,
+    version = $7,
+    is_utage = $8,
+    is_available = $9,
+    is_new = $10,
+    sort = $11,
+    release_date = $12,
+    delete_date = $13,
     updated_at = now()
-where song_id = $13
+where song_id = $14
 returning *;

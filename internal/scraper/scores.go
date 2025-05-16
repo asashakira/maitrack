@@ -105,11 +105,11 @@ func scrapeScore(queries *database.Queries, m *maimaiclient.Client, recordID str
 		}
 	})
 	maxComboString := strings.Split(comboString, "/")[0]
-	score.MaxCombo, _ = utils.StringToInt32(maxComboString)
+	score.MaxCombo, _ = utils.ConvertStringToInt32(maxComboString)
 
 	// delux score is written as "DxScore / MaxDxScore"
 	dxScores := strings.Split(doc.Find(`.white.p_r_5.f_15.f_r`).Text(), "/")
-	score.DxScore, _ = utils.StringToInt32(utils.RemoveFromString(dxScores[0], `[^\d]`)) // remove non numbers then convert
+	score.DxScore, _ = utils.ConvertStringToInt32(utils.RemoveFromString(dxScores[0], `[^\d]`)) // remove non numbers then convert
 
 	// beatmap type
 	typeIconImageURL := doc.Find(`img.playlog_music_kind_icon`).AttrOr("src", "Not Found")
@@ -149,9 +149,9 @@ func scrapeScore(queries *database.Queries, m *maimaiclient.Client, recordID str
 	doc.Find(`.playlog_fl_block.m_5.f_r.f_12 .p_t_5`).Each(func(i int, s *goquery.Selection) {
 		switch i {
 		case 0:
-			score.Fast, _ = utils.StringToInt32(s.Text())
+			score.Fast, _ = utils.ConvertStringToInt32(s.Text())
 		case 1:
-			score.Late, _ = utils.StringToInt32(s.Text())
+			score.Late, _ = utils.ConvertStringToInt32(s.Text())
 		}
 	})
 

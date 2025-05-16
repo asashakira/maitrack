@@ -157,18 +157,18 @@ func ScrapeUserData(m *maimaiclient.Client) (database.UserDatum, error) {
 	}
 
 	// rating
-	rating, atoiErr := utils.StringToInt32(doc.Find(".rating_block").Text())
+	rating, atoiErr := utils.ConvertStringToInt32(doc.Find(".rating_block").Text())
 	if atoiErr != nil {
 		return database.UserDatum{}, atoiErr
 	}
 
 	// play count
 	playCounts := strings.Split(doc.Find(".m_5.m_b_5.t_r.f_12").Text(), "：")
-	seasonPlayCount, atoiErr := utils.StringToInt32(utils.RemoveFromString(playCounts[1], `[^\d+]`))
+	seasonPlayCount, atoiErr := utils.ConvertStringToInt32(utils.RemoveFromString(playCounts[1], `[^\d+]`))
 	if atoiErr != nil {
 		return database.UserDatum{}, fmt.Errorf("failed to atoi seasonPlayCount: %w", atoiErr)
 	}
-	TotalPlayCount, atoiErr := utils.StringToInt32(utils.RemoveFromString(playCounts[2], `[^\d+]`))
+	TotalPlayCount, atoiErr := utils.ConvertStringToInt32(utils.RemoveFromString(playCounts[2], `[^\d+]`))
 	if atoiErr != nil {
 		return database.UserDatum{}, fmt.Errorf("failed to atoi seasonPlayCount: %w", atoiErr)
 	}

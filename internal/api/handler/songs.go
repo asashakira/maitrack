@@ -118,29 +118,29 @@ func (h *Handler) GetSongByID(w http.ResponseWriter, r *http.Request) {
 // all lowercase
 // remove except these `[一-龠ぁ-ゔァ-ヴーa-zA-Z0-9ａ-ｚＡ-Ｚ０-９々〆〤ヶ]+`
 func (h *Handler) GetSongByAltKey(w http.ResponseWriter, r *http.Request) {
-	// altkey := chi.URLParam(r, "altkey")
-	// altkey, err := url.QueryUnescape(altkey)
-	// if err != nil {
-	// 	utils.RespondWithError(w, 400, fmt.Sprintf("error decoding altkey from url: %v", err))
-	// 	return
-	// }
-	//
-	// song, err := h.queries.GetSongByAltKey(r.Context(), altkey)
-	// if err != nil {
-	// 	// Handle "no rows found"
-	// 	if errors.Is(err, pgx.ErrNoRows) {
-	// 		errorMessage := fmt.Sprintf("No song found with provided altkey '%s': %s", altkey, err)
-	// 		log.Println(errorMessage)
-	// 		utils.RespondWithError(w, 404, errorMessage)
-	// 		return
-	// 	}
-	// 	// Handle other errors
-	// 	errorMessage := fmt.Sprintf("GetSongByAltKey %v", err)
-	// 	log.Println(errorMessage)
-	// 	utils.RespondWithError(w, 400, errorMessage)
-	// 	return
-	// }
-	utils.RespondWithJSON(w, 200, "handler not ready")
+	altkey := chi.URLParam(r, "altkey")
+	altkey, err := url.QueryUnescape(altkey)
+	if err != nil {
+		utils.RespondWithError(w, 400, fmt.Sprintf("error decoding altkey from url: %v", err))
+		return
+	}
+
+	song, err := h.queries.GetSongByAltKey(r.Context(), altkey)
+	if err != nil {
+		// Handle "no rows found"
+		if errors.Is(err, pgx.ErrNoRows) {
+			errorMessage := fmt.Sprintf("No song found with provided altkey '%s': %s", altkey, err)
+			log.Println(errorMessage)
+			utils.RespondWithError(w, 404, errorMessage)
+			return
+		}
+		// Handle other errors
+		errorMessage := fmt.Sprintf("GetSongByAltKey %v", err)
+		log.Println(errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
+		return
+	}
+	utils.RespondWithJSON(w, 200, song)
 }
 
 // return array of songs that matches title

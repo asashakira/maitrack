@@ -110,6 +110,7 @@ func upsertSong(queries *sqlc.Queries, ms maimaisong) (sqlc.Song, error) {
 			// insert if it does not exist in DB
 			newSong, createSongErr := queries.CreateSong(context.Background(), sqlc.CreateSongParams{
 				SongID:      uuid.New(),
+				AltKey:      utils.CreateAltKey(ms.Title, ms.Artist),
 				Title:       ms.Title,
 				Artist:      ms.Artist,
 				Genre:       ms.Genre,
@@ -126,10 +127,10 @@ func upsertSong(queries *sqlc.Queries, ms maimaisong) (sqlc.Song, error) {
 				return sqlc.Song{}, fmt.Errorf("failed to create song: %w", createSongErr)
 			}
 
-			uploadErr := utils.UploadImageToS3("https://maimaidx.jp/maimai-mobile/img/Music/" + ms.ImageUrl)
-			if uploadErr != nil {
-				return sqlc.Song{}, fmt.Errorf("failed to upload image to S3: %w", uploadErr)
-			}
+			// uploadErr := utils.UploadImageToS3("https://maimaidx.jp/maimai-mobile/img/Music/" + ms.ImageUrl)
+			// if uploadErr != nil {
+			// 	return sqlc.Song{}, fmt.Errorf("failed to upload image to S3: %w", uploadErr)
+			// }
 
 			// return newly created song
 			return newSong, nil
@@ -141,6 +142,7 @@ func upsertSong(queries *sqlc.Queries, ms maimaisong) (sqlc.Song, error) {
 	// update song
 	updatedSong, updateErr := queries.UpdateSong(context.Background(), sqlc.UpdateSongParams{
 		SongID:      song.SongID,
+		AltKey:      utils.CreateAltKey(ms.Title, ms.Artist),
 		Title:       ms.Title,
 		Artist:      ms.Artist,
 		Genre:       ms.Genre,

@@ -15,6 +15,7 @@ import (
 const createSong = `-- name: CreateSong :one
 insert into songs (
     song_id,
+    alt_key,
     title,
     artist,
     genre,
@@ -30,12 +31,13 @@ insert into songs (
     updated_at,
     created_at
 )
-values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, now(), now())
-returning song_id, title, artist, genre, bpm, image_url, version, sort, is_utage, is_available, is_new, release_date, delete_date, updated_at, created_at
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, now(), now())
+returning song_id, alt_key, title, artist, genre, bpm, image_url, version, sort, is_utage, is_available, is_new, release_date, delete_date, updated_at, created_at
 `
 
 type CreateSongParams struct {
 	SongID      uuid.UUID   `json:"songID"`
+	AltKey      string      `json:"altKey"`
 	Title       string      `json:"title"`
 	Artist      string      `json:"artist"`
 	Genre       string      `json:"genre"`
@@ -53,6 +55,7 @@ type CreateSongParams struct {
 func (q *Queries) CreateSong(ctx context.Context, arg CreateSongParams) (Song, error) {
 	row := q.db.QueryRow(ctx, createSong,
 		arg.SongID,
+		arg.AltKey,
 		arg.Title,
 		arg.Artist,
 		arg.Genre,
@@ -69,6 +72,7 @@ func (q *Queries) CreateSong(ctx context.Context, arg CreateSongParams) (Song, e
 	var i Song
 	err := row.Scan(
 		&i.SongID,
+		&i.AltKey,
 		&i.Title,
 		&i.Artist,
 		&i.Genre,
@@ -180,6 +184,36 @@ func (q *Queries) GetAllSongs(ctx context.Context) ([]GetAllSongsRow, error) {
 	return items, nil
 }
 
+const getSongByAltKey = `-- name: GetSongByAltKey :one
+select song_id, alt_key, title, artist, genre, bpm, image_url, version, sort, is_utage, is_available, is_new, release_date, delete_date, updated_at, created_at
+from songs
+where alt_key = $1
+`
+
+func (q *Queries) GetSongByAltKey(ctx context.Context, altKey string) (Song, error) {
+	row := q.db.QueryRow(ctx, getSongByAltKey, altKey)
+	var i Song
+	err := row.Scan(
+		&i.SongID,
+		&i.AltKey,
+		&i.Title,
+		&i.Artist,
+		&i.Genre,
+		&i.Bpm,
+		&i.ImageUrl,
+		&i.Version,
+		&i.Sort,
+		&i.IsUtage,
+		&i.IsAvailable,
+		&i.IsNew,
+		&i.ReleaseDate,
+		&i.DeleteDate,
+		&i.UpdatedAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getSongByID = `-- name: GetSongByID :one
 select
     songs.song_id,
@@ -261,7 +295,7 @@ func (q *Queries) GetSongByID(ctx context.Context, songID uuid.UUID) (GetSongByI
 }
 
 const getSongByTitleAndArtist = `-- name: GetSongByTitleAndArtist :one
-select song_id, title, artist, genre, bpm, image_url, version, sort, is_utage, is_available, is_new, release_date, delete_date, updated_at, created_at
+select song_id, alt_key, title, artist, genre, bpm, image_url, version, sort, is_utage, is_available, is_new, release_date, delete_date, updated_at, created_at
 from songs
 where title = $1 and artist = $2
 `
@@ -276,6 +310,7 @@ func (q *Queries) GetSongByTitleAndArtist(ctx context.Context, arg GetSongByTitl
 	var i Song
 	err := row.Scan(
 		&i.SongID,
+		&i.AltKey,
 		&i.Title,
 		&i.Artist,
 		&i.Genre,
@@ -295,7 +330,7 @@ func (q *Queries) GetSongByTitleAndArtist(ctx context.Context, arg GetSongByTitl
 }
 
 const getSongsByTitle = `-- name: GetSongsByTitle :many
-select song_id, title, artist, genre, bpm, image_url, version, sort, is_utage, is_available, is_new, release_date, delete_date, updated_at, created_at
+select song_id, alt_key, title, artist, genre, bpm, image_url, version, sort, is_utage, is_available, is_new, release_date, delete_date, updated_at, created_at
 from songs
 where title = $1
 `
@@ -311,6 +346,7 @@ func (q *Queries) GetSongsByTitle(ctx context.Context, title string) ([]Song, er
 		var i Song
 		if err := rows.Scan(
 			&i.SongID,
+			&i.AltKey,
 			&i.Title,
 			&i.Artist,
 			&i.Genre,
@@ -339,24 +375,26 @@ func (q *Queries) GetSongsByTitle(ctx context.Context, title string) ([]Song, er
 const updateSong = `-- name: UpdateSong :one
 update songs
 set
-    title = $1,
-    artist = $2,
-    genre = $3,
-    bpm = $4,
-    image_url = $5,
-    version = $6,
-    is_utage = $7,
-    is_available = $8,
-    is_new = $9,
-    sort = $10,
-    release_date = $11,
-    delete_date = $12,
+    alt_key = $1,
+    title = $2,
+    artist = $3,
+    genre = $4,
+    bpm = $5,
+    image_url = $6,
+    version = $7,
+    is_utage = $8,
+    is_available = $9,
+    is_new = $10,
+    sort = $11,
+    release_date = $12,
+    delete_date = $13,
     updated_at = now()
-where song_id = $13
-returning song_id, title, artist, genre, bpm, image_url, version, sort, is_utage, is_available, is_new, release_date, delete_date, updated_at, created_at
+where song_id = $14
+returning song_id, alt_key, title, artist, genre, bpm, image_url, version, sort, is_utage, is_available, is_new, release_date, delete_date, updated_at, created_at
 `
 
 type UpdateSongParams struct {
+	AltKey      string      `json:"altKey"`
 	Title       string      `json:"title"`
 	Artist      string      `json:"artist"`
 	Genre       string      `json:"genre"`
@@ -374,6 +412,7 @@ type UpdateSongParams struct {
 
 func (q *Queries) UpdateSong(ctx context.Context, arg UpdateSongParams) (Song, error) {
 	row := q.db.QueryRow(ctx, updateSong,
+		arg.AltKey,
 		arg.Title,
 		arg.Artist,
 		arg.Genre,
@@ -391,6 +430,7 @@ func (q *Queries) UpdateSong(ctx context.Context, arg UpdateSongParams) (Song, e
 	var i Song
 	err := row.Scan(
 		&i.SongID,
+		&i.AltKey,
 		&i.Title,
 		&i.Artist,
 		&i.Genre,

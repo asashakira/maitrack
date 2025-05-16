@@ -69,6 +69,7 @@ type Score struct {
 
 type Song struct {
 	SongID      uuid.UUID        `json:"songID"`
+	AltKey      string           `json:"altKey"`
 	Title       string           `json:"title"`
 	Artist      string           `json:"artist"`
 	Genre       string           `json:"genre"`

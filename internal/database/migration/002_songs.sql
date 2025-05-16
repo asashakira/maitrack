@@ -1,6 +1,7 @@
 -- +goose Up
 create table songs (
     song_id uuid primary key,
+    alt_key text not null,
     title text not null,
     artist text not null,
     genre text not null,
