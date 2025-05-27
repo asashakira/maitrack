@@ -127,10 +127,10 @@ func upsertSong(queries *sqlc.Queries, ms maimaisong) (sqlc.Song, error) {
 				return sqlc.Song{}, fmt.Errorf("failed to create song: %w", createSongErr)
 			}
 
-			// uploadErr := utils.UploadImageToS3("https://maimaidx.jp/maimai-mobile/img/Music/" + ms.ImageUrl)
-			// if uploadErr != nil {
-			// 	return sqlc.Song{}, fmt.Errorf("failed to upload image to S3: %w", uploadErr)
-			// }
+			uploadErr := utils.UploadImageToS3("https://maimaidx.jp/maimai-mobile/img/Music/" + ms.ImageUrl)
+			if uploadErr != nil {
+				return sqlc.Song{}, fmt.Errorf("failed to upload image to S3: %w", uploadErr)
+			}
 
 			// return newly created song
 			return newSong, nil
