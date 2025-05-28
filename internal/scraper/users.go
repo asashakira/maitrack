@@ -42,15 +42,19 @@ func ScrapeAllUsers(pool *pgxpool.Pool) {
 		m := maimaiclient.New()
 		err := m.Login(decryptedSegaID, decryptedSegaPassword)
 		if err != nil {
-			log.Printf("Failed to login to maimai with SEGA ID '%s': %s\n", u.SegaID, err)
+			log.Printf("failed to login to maimai with SEGA ID '%s': %s\n", u.SegaID, err)
 			return
 		}
-		ScrapeUser(m, queries, ScrapeUserParams{
+		scrapeUserErr := ScrapeUser(m, queries, ScrapeUserParams{
 			UserID:       u.UserID,
 			GameName:     u.GameName,
 			TagLine:      u.TagLine,
 			LastPlayedAt: u.LastPlayedAt,
 		})
+		if scrapeUserErr != nil {
+			log.Printf("ERROR failed to scrape user %s %s#%s: %s", u.UserID, u.GameName, u.TagLine, scrapeUserErr)
+			return
+		}
 	}
 
 	log.Println("ScrapeAllUsers DONE")

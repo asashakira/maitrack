@@ -111,14 +111,6 @@ func scrapeScore(queries *database.Queries, m *maimaiclient.Client, recordID str
 	dxScores := strings.Split(doc.Find(`.white.p_r_5.f_15.f_r`).Text(), "/")
 	score.DxScore, _ = utils.ConvertStringToInt32(utils.RemoveFromString(dxScores[0], `[^\d]`)) // remove non numbers then convert
 
-	// beatmap type
-	typeIconImageURL := doc.Find(`img.playlog_music_kind_icon`).AttrOr("src", "Not Found")
-	dxIconImageURL := "https://maimaidx.jp/maimai-mobile/img/music_dx.png"
-	beatmapType := "std"
-	if typeIconImageURL == dxIconImageURL {
-		beatmapType = "dx"
-	}
-
 	// note details
 	doc.Find(`.playlog_notes_detail td`).Each(func(i int, s *goquery.Selection) {
 		// Determine the note type and index
@@ -171,6 +163,16 @@ func scrapeScore(queries *database.Queries, m *maimaiclient.Client, recordID str
 	// difficulty
 	difficultyImgSrc := doc.Find(`.playlog_top_container.p_r img.playlog_diff.v_b`).AttrOr(`src`, "Not Found")
 	difficulty := getDifficultyFromImgSrc(difficultyImgSrc)
+
+	// beatmap type
+	typeIconImageURL := doc.Find(`img.playlog_music_kind_icon`).AttrOr("src", "Not Found")
+	dxIconImageURL := "https://maimaidx.jp/maimai-mobile/img/music_dx.png"
+	beatmapType := "std"
+	if typeIconImageURL == dxIconImageURL {
+		beatmapType = "dx"
+	} else if difficulty == "utage" {
+		beatmapType = "utage"
+	}
 
 	// imageURL
 	imageURL := doc.Find(`img.music_img`).AttrOr(`src`, "Not Found")
@@ -237,7 +239,7 @@ func getSongAndBeatmapID(queries *database.Queries, title, difficulty, beatmapTy
 			Type:       beatmapType,
 		})
 		if getBeatmapErr != nil {
-			return uuid.Nil, uuid.Nil, fmt.Errorf("beatmap not found: %w", getBeatmapErr)
+			return uuid.Nil, uuid.Nil, fmt.Errorf("beatmap with details {%s, %s, %s, %s} not found: %w", s.SongID, s.Title, difficulty, beatmapType, getBeatmapErr)
 		}
 		songID = beatmap.SongID
 		beatmapID = beatmap.BeatmapID
@@ -259,6 +261,8 @@ func getDifficultyFromImgSrc(imgSrc string) string {
 		return "master"
 	case "diff_remaster.png":
 		return "remaster"
+	case "diff_utage.png":
+		return "utage"
 	default:
 		return ""
 	}
