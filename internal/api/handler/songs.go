@@ -54,7 +54,7 @@ func (h *Handler) CreateSong(w http.ResponseWriter, r *http.Request) {
 	}
 
 	song, err := h.queries.CreateSong(r.Context(), database.CreateSongParams{
-		SongID:      uuid.New(),
+		ID:          uuid.New(),
 		Title:       params.Title,
 		Artist:      params.Artist,
 		Genre:       params.Genre,
@@ -77,7 +77,6 @@ func (h *Handler) CreateSong(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) GetAllSongs(w http.ResponseWriter, r *http.Request) {
 	songs, err := h.queries.GetAllSongs(r.Context())
-
 	if err != nil {
 		errorMessage := fmt.Sprintf("GetAllSongs %v", err)
 		log.Println(errorMessage)
@@ -225,7 +224,7 @@ func (h *Handler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 
 	// Update only the fields provided in the request
 	updatedSong, err := h.queries.UpdateSong(r.Context(), database.UpdateSongParams{
-		SongID:      song.SongID,
+		ID:          song.ID,
 		Title:       ifNotNil(params.Title, song.Title),
 		Artist:      ifNotNil(params.Artist, song.Artist),
 		Genre:       ifNotNil(params.Genre, song.Genre),

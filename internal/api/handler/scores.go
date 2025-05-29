@@ -20,7 +20,7 @@ func (h *Handler) CreateScore(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		BeatmapID     string `json:"beatmapID"`
 		SongID        string `json:"songID"`
-		UserID        string `json:"userID"`
+		UserUuid      string `json:"userUuid"`
 		Accuracy      string `json:"accuracy"`
 		MaxCombo      int32  `json:"maxCombo"`
 		DxScore       int32  `json:"dxScore"`
@@ -62,7 +62,7 @@ func (h *Handler) CreateScore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if params.BeatmapID == "" || params.SongID == "" || params.UserID == "" {
+	if params.BeatmapID == "" || params.SongID == "" || params.UserUuid == "" {
 		utils.RespondWithError(w, 400, "BeatmapID, SongID, and UserID are required")
 		return
 	}
@@ -74,10 +74,10 @@ func (h *Handler) CreateScore(w http.ResponseWriter, r *http.Request) {
 	}
 
 	score, err := h.queries.CreateScore(r.Context(), database.CreateScoreParams{
-		ScoreID:       uuid.New(),
+		ID:            uuid.New(),
 		BeatmapID:     uuid.MustParse(params.BeatmapID),
 		SongID:        uuid.MustParse(params.SongID),
-		UserID:        uuid.MustParse(params.UserID),
+		UserUuid:      uuid.MustParse(params.UserUuid),
 		Accuracy:      params.Accuracy,
 		MaxCombo:      params.MaxCombo,
 		DxScore:       params.DxScore,
@@ -120,23 +120,14 @@ func (h *Handler) CreateScore(w http.ResponseWriter, r *http.Request) {
 }
 
 type ScoresResponse struct {
-	Scores     []database.GetScoreByMaiIDRow `json:"scores"`
-	NextOffset int                           `json:"nextOffset,omitempty"`
-	HasMore    bool                          `json:"hasMore"`
+	Scores     []database.GetScoresByUserIDRow `json:"scores"`
+	NextOffset int                             `json:"nextOffset,omitempty"`
+	HasMore    bool                            `json:"hasMore"`
 }
 
 // gets score by maiID (gameName + tagLine)
-func (h *Handler) GetScoresByMaiID(w http.ResponseWriter, r *http.Request) {
-	maiID := chi.URLParam(r, "maiID")
-
-	// get gamename and tagline
-	gameName, tagLine, decodeMaiIDErr := decodeMaiID(maiID)
-	if decodeMaiIDErr != nil {
-		errorMessage := fmt.Sprintf("error decoding maiID %s", decodeMaiIDErr)
-		log.Println(errorMessage)
-		utils.RespondWithError(w, 400, errorMessage)
-		return
-	}
+func (h *Handler) GetScoresByUserID(w http.ResponseWriter, r *http.Request) {
+	userID := chi.URLParam(r, "userID")
 
 	limit, limitErr := strconv.Atoi(r.URL.Query().Get("limit"))
 	if limitErr != nil {
@@ -147,22 +138,21 @@ func (h *Handler) GetScoresByMaiID(w http.ResponseWriter, r *http.Request) {
 		offset = 0
 	}
 
-	scores, err := h.queries.GetScoreByMaiID(r.Context(), database.GetScoreByMaiIDParams{
-		GameName: gameName,
-		TagLine:  tagLine,
-		Limit:    int32(limit),
-		Offset:   int32(offset),
+	scores, err := h.queries.GetScoresByUserID(r.Context(), database.GetScoresByUserIDParams{
+		UserID: userID,
+		Limit:  int32(limit),
+		Offset: int32(offset),
 	})
 	if err != nil {
 		// Handle "no rows found"
 		if errors.Is(err, pgx.ErrNoRows) {
-			errorMessage := fmt.Sprintf("No score found with provided MaiID '%s': %s", maiID, err)
+			errorMessage := fmt.Sprintf("No score found with provided UserID '%s': %s", userID, err)
 			log.Println(errorMessage)
 			utils.RespondWithError(w, 404, errorMessage)
 			return
 		}
 		// Handle other errors
-		errorMessage := fmt.Sprintf("GetScoresByMaiID %s", err)
+		errorMessage := fmt.Sprintf("GetScoresByScoreID %s", err)
 		log.Println(errorMessage)
 		utils.RespondWithError(w, 400, errorMessage)
 		return

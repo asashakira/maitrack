@@ -10,7 +10,7 @@ import (
 )
 
 type Song struct {
-	SongID      string `json:"songID,omitempty"`
+	ID          string `json:"id,omitempty"`
 	AltKey      string `json:"altkey,omitempty"`
 	Title       string `json:"title,omitempty"`
 	Artist      string `json:"artist,omitempty"`
@@ -44,7 +44,7 @@ func PrintSongs(songs []Song) {
 }
 
 func PrintSong(s Song) {
-	fmt.Printf("%-15s %v\n", "SongID:", s.SongID)
+	fmt.Printf("%-15s %v\n", "ID:", s.ID)
 	fmt.Printf("%-15s %v\n", "AltKey:", s.AltKey)
 	fmt.Printf("%-15s %v\n", "Title:", s.Title)
 	fmt.Printf("%-15s %v\n", "Artist:", s.Artist)

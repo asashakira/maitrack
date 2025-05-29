@@ -41,7 +41,7 @@ func (h *Handler) CreateBeatmap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	beatmap, err := h.queries.CreateBeatmap(r.Context(), database.CreateBeatmapParams{
-		BeatmapID:     uuid.New(),
+		ID:            uuid.New(),
 		SongID:        params.SongID,
 		Difficulty:    params.Difficulty,
 		Level:         params.Level,
@@ -133,7 +133,7 @@ func (h *Handler) UpdateBeatmap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	updatedBeatmap, err := h.queries.UpdateBeatmap(r.Context(), database.UpdateBeatmapParams{
-		BeatmapID:     params.BeatmapID,
+		ID:     params.BeatmapID,
 		SongID:        ifNotNil(params.SongID, beatmap.SongID),
 		Difficulty:    ifNotNil(params.Difficulty, beatmap.Difficulty),
 		Level:         ifNotNil(params.Level, beatmap.Level),

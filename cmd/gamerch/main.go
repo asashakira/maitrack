@@ -55,7 +55,7 @@ func main() {
 }
 
 func updateDBSongWithGamerchSong(queries *sqlc.Queries, song gamerch.Song) {
-	id, _ := uuid.Parse(song.SongID)
+	id, _ := uuid.Parse(song.ID)
 
 	// update release date if provided
 	var releaseDate pgtype.Date
@@ -80,7 +80,7 @@ func updateDBSongWithGamerchSong(queries *sqlc.Queries, song gamerch.Song) {
 	}
 
 	_, err := queries.UpdateSong(context.Background(), sqlc.UpdateSongParams{
-		SongID:      id,
+		ID:      id,
 		Title:       song.Title,
 		Artist:      song.Artist,
 		Genre:       song.Genre,

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/asashakira/maitrack/internal/api/middleware"
 	database "github.com/asashakira/maitrack/internal/database/sqlc"
@@ -16,18 +17,16 @@ import (
 	"github.com/asashakira/maitrack/internal/utils"
 	"github.com/asashakira/maitrack/pkg/maimaiclient"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Username     string `json:"username"`
+		UserID       string `json:"userID"`
+		DisplayName  string `json:"displayName"`
 		Password     string `json:"password"`
 		SegaID       string `json:"segaID"`
 		SegaPassword string `json:"segaPassword"`
-		GameName     string `json:"gameName"`
-		TagLine      string `json:"tagLine"`
 	}
 
 	// Parse request
@@ -39,7 +38,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	// Input validation
 	// TODO: do better
-	if params.Username == "" || params.Password == "" || params.SegaID == "" || params.SegaPassword == "" {
+	if params.UserID == "" || params.Password == "" || params.SegaID == "" || params.SegaPassword == "" {
 		utils.RespondWithError(w, 400, "All fields are required")
 		return
 	}
@@ -48,15 +47,15 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	m := maimaiclient.New()
 	err := m.Login(params.SegaID, params.SegaPassword)
 	if err != nil {
-		log.Printf("Failed to login to maimai with SEGAID '%s': %s\n", params.SegaID, err)
-		utils.RespondWithError(w, 400, "Invalid SegaID or password")
+		log.Printf("Invalid SEGA Credentials '%s': %s\n", params.SegaID, err)
+		utils.RespondWithError(w, 400, "Invalid SEGA Credentials")
 		return
 	}
 
 	// Hash Password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(params.Password), bcrypt.DefaultCost)
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(params.Password), bcrypt.DefaultCost)
 	if err != nil {
-		log.Printf("Error hashing password: %v", err)
+		log.Printf("Error hashing password: %s", err)
 		utils.RespondWithError(w, 500, "Internal Server Error")
 		return
 	}
@@ -64,26 +63,28 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	// Encrypt SEGA Creds
 	encryptedSegaID, err := utils.Encrypt(params.SegaID)
 	if err != nil {
-		log.Printf("Error encrypting SEGA ID: %v", err)
+		log.Printf("Error encrypting SEGA ID: %s", err)
 		utils.RespondWithError(w, 500, "Internal Server Error")
 		return
 	}
 	encryptedSegaPassword, err := utils.Encrypt(params.SegaPassword)
 	if err != nil {
-		log.Printf("Error encrypting SEGA password: %v", err)
+		log.Printf("Error encrypting SEGA password: %s", err)
 		utils.RespondWithError(w, 500, "Internal Server Error")
 		return
 	}
 
+	defaultTime, _ := utils.StringToUTCTime("2006-01-02 15:04")
 	// create user
 	user, err := h.queries.CreateUser(r.Context(), database.CreateUserParams{
-		UserID:       uuid.New(),
-		Username:     params.Username,
-		Password:     string(hashedPassword),
-		SegaID:       encryptedSegaID,
-		SegaPassword: encryptedSegaPassword,
-		GameName:     params.GameName,
-		TagLine:      params.TagLine,
+		ID:                    uuid.New(),
+		UserID:                params.UserID,
+		DisplayName:           params.DisplayName,
+		PasswordHash:          string(passwordHash),
+		EncryptedSegaID:       encryptedSegaID,
+		EncryptedSegaPassword: encryptedSegaPassword,
+		LastPlayedAt:          pgtype.Timestamp{Time: defaultTime, Valid: true},
+		LastScrapedAt:         pgtype.Timestamp{Time: defaultTime, Valid: true},
 	})
 	if err != nil {
 		errorMessage := fmt.Sprintf("Error creating user: %s", err)
@@ -95,26 +96,21 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	// create initial userdata
 	_, createUserDataErr := h.queries.CreateUserData(r.Context(), database.CreateUserDataParams{
 		ID:              uuid.New(),
-		UserID:          user.UserID,
-		GameName:        user.GameName,
-		TagLine:         user.TagLine,
+		UserUuid:        user.ID,
 		Rating:          0,
 		SeasonPlayCount: 0,
 		TotalPlayCount:  0,
 	})
 	if createUserDataErr != nil {
-		errorMessage := fmt.Sprintf("failed to create user data for user '%s#%s': %s", user.GameName, user.TagLine, createUserDataErr)
+		errorMessage := fmt.Sprintf("failed to create user data for user '%s': %s", user.UserID, createUserDataErr)
 		log.Println(errorMessage)
 		utils.RespondWithError(w, 400, errorMessage)
 		return
 	}
 
 	// create initial user metadata
-	defaultTime, _ := utils.StringToUTCTime("2006-01-02 15:04")
 	_, err = h.queries.CreateUserMetadata(r.Context(), database.CreateUserMetadataParams{
-		UserID:        user.UserID,
-		LastPlayedAt:  pgtype.Timestamp{Time: defaultTime, Valid: true},
-		LastScrapedAt: pgtype.Timestamp{Time: defaultTime, Valid: true},
+		UserUuid: user.ID,
 	})
 	if err != nil {
 		errorMessage := fmt.Sprintf("Error Creating UserMetadata: %s", err)
@@ -125,13 +121,11 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	// Define JWT claims
 	claims := service.Claims{
-		Username: user.Username,
-		GameName: user.GameName,
-		TagLine:  user.TagLine,
-		Role:     "user",
+		UserID:      user.UserID,
+		DisplayName: user.DisplayName,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "maitrack",
-			Subject:   user.Username,
+			Subject:   user.UserID,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // Token expires in 24 hours
 		},
 	}
@@ -165,10 +159,9 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	// Response Data
 	data := map[string]any{
-		"userID":   user.UserID,
-		"username": user.Username,
-		"gameName": user.GameName,
-		"tagLine":  user.TagLine,
+		"id":          user.ID,
+		"userID":      user.UserID,
+		"displayName": user.DisplayName,
 	}
 
 	utils.RespondWithJSON(w, 201, data)
@@ -176,7 +169,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Username string `json:"username"`
+		UserID   string `json:"userID"`
 		Password string `json:"password"`
 	}
 
@@ -189,7 +182,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch user from DB
-	user, err := h.queries.GetUserByUsername(r.Context(), params.Username)
+	user, err := h.queries.GetPasswordHashByUserID(r.Context(), params.UserID)
 	if err != nil {
 		log.Println("User not found:", err)
 		utils.RespondWithError(w, 400, "Invalid login credentials")
@@ -197,7 +190,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Compare hashed password
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(params.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(params.Password)); err != nil {
 		log.Println("Invalid password:", err)
 		utils.RespondWithError(w, 401, "Invalid login credentials")
 		return
@@ -205,13 +198,11 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	// Define JWT claims
 	claims := service.Claims{
-		Username: user.Username,
-		GameName: user.GameName,
-		TagLine:  user.TagLine,
-		Role:     "user",
+		UserID:      user.UserID,
+		DisplayName: user.DisplayName,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "maitrack",
-			Subject:   user.Username,
+			Subject:   user.UserID,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // Token expires in 24 hours
 		},
 	}
@@ -246,8 +237,8 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	// Respond with user details (excluding token)
 	utils.RespondWithJSON(w, 200, map[string]any{
 		"user": map[string]any{
-			"username": user.Username,
-			"role":     "user",
+			"userID":      user.UserID,
+			"displayName": user.DisplayName,
 		},
 	})
 }
@@ -277,10 +268,8 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]any{
-		"username": user.Username,
-		"gameName": user.GameName,
-		"tagLine":  user.TagLine,
-		"role":     user.Role,
+		"userID":      user.UserID,
+		"displayName": user.DisplayName,
 	}
 
 	utils.RespondWithJSON(w, 200, data)

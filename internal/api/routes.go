@@ -31,8 +31,8 @@ func SetUpRoutes(r *chi.Mux, h *handler.Handler, m *middleware.Middleware) {
 
 	// user routes
 	v1Router.Get("/users", h.GetAllUsers)
-	v1Router.Get("/users/by-mai-id/{maiID}", h.GetUserByMaiID)
-	v1Router.Post("/users/by-mai-id/{maiID}/update", h.UpdateUserByMaiID)
+	v1Router.Get("/users/by-user-id/{userID}", h.GetUserByUserID)
+	v1Router.Post("/users/by-user-id/{userID}/update", h.UpdateUserByUserID)
 
 	// songs
 	v1Router.Get("/songs", h.GetAllSongs)
@@ -49,7 +49,7 @@ func SetUpRoutes(r *chi.Mux, h *handler.Handler, m *middleware.Middleware) {
 	v1Router.Patch("/beatmaps", h.UpdateBeatmap)
 
 	// scores
-	v1Router.Get("/users/by-mai-id/{maiID}/scores", h.GetScoresByMaiID)
+	v1Router.Get("/users/by-user-id/{userID}/scores", h.GetScoresByUserID)
 	v1Router.Post("/scores", h.CreateScore)
 
 	r.Mount("/v1", v1Router)

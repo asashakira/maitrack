@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 
-	database "github.com/asashakira/maitrack/internal/database/sqlc"
 	"github.com/asashakira/maitrack/internal/scraper"
 	"github.com/asashakira/maitrack/internal/utils"
 	"github.com/asashakira/maitrack/pkg/maimaiclient"
@@ -14,22 +13,10 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (h *Handler) GetUserByMaiID(w http.ResponseWriter, r *http.Request) {
-	maiID := chi.URLParam(r, "maiID")
+func (h *Handler) GetUserByUserID(w http.ResponseWriter, r *http.Request) {
+	userID := chi.URLParam(r, "userID")
 
-	// get gamename and tagline
-	gameName, tagLine, decodeMaiIDErr := decodeMaiID(maiID)
-	if decodeMaiIDErr != nil {
-		errorMessage := fmt.Sprintf("error decoding maiID %s", decodeMaiIDErr)
-		log.Println(errorMessage)
-		utils.RespondWithError(w, 400, errorMessage)
-		return
-	}
-
-	user, err := h.queries.GetUserByMaiID(r.Context(), database.GetUserByMaiIDParams{
-		GameName: gameName,
-		TagLine:  tagLine,
-	})
+	user, err := h.queries.GetUserByUserID(r.Context(), userID)
 	if err != nil {
 		// Handle "no rows found"
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -38,7 +25,7 @@ func (h *Handler) GetUserByMaiID(w http.ResponseWriter, r *http.Request) {
 			utils.RespondWithError(w, 404, errorMessage)
 			return
 		}
-		errorMessage := fmt.Sprintf("GetUserByMaiID %s", err)
+		errorMessage := fmt.Sprintf("GetUserByUserID %s", err)
 		log.Println(errorMessage)
 		utils.RespondWithError(w, 400, errorMessage)
 		return
@@ -62,23 +49,11 @@ func (h *Handler) GetUserHealthCheck(w http.ResponseWriter, r *http.Request) {
 	utils.RespondWithJSON(w, 200, "Hello")
 }
 
-func (h *Handler) UpdateUserByMaiID(w http.ResponseWriter, r *http.Request) {
-	maiID := chi.URLParam(r, "maiID")
-
-	// get gamename and tagline
-	gameName, tagLine, decodeMaiIDErr := decodeMaiID(maiID)
-	if decodeMaiIDErr != nil {
-		errorMessage := fmt.Sprintf("error decoding maiID %s", decodeMaiIDErr)
-		log.Println(errorMessage)
-		utils.RespondWithError(w, 400, errorMessage)
-		return
-	}
+func (h *Handler) UpdateUserByUserID(w http.ResponseWriter, r *http.Request) {
+	userID := chi.URLParam(r, "userID")
 
 	// get user data
-	user, err := h.queries.GetUserByMaiID(r.Context(), database.GetUserByMaiIDParams{
-		GameName: gameName,
-		TagLine:  tagLine,
-	})
+	user, err := h.queries.GetUserByUserID(r.Context(), userID)
 	if err != nil {
 		// Handle "no rows found"
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -93,10 +68,7 @@ func (h *Handler) UpdateUserByMaiID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	segaCreds, err := h.queries.GetSegaCredentials(r.Context(), database.GetSegaCredentialsParams{
-		GameName: gameName,
-		TagLine:  tagLine,
-	})
+	segaCreds, err := h.queries.GetSegaCredentialsByUserID(r.Context(), userID)
 	if err != nil {
 		errorMessage := fmt.Sprintf("GetSegaCredentials error: %s", err)
 		log.Println(errorMessage)
@@ -104,13 +76,13 @@ func (h *Handler) UpdateUserByMaiID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	decryptedSegaID, decryptErr := utils.Decrypt(segaCreds.SegaID)
+	decryptedSegaID, decryptErr := utils.Decrypt(segaCreds.EncryptedSegaID)
 	if decryptErr != nil {
 		log.Printf("failed to decrypt SEGA ID: %s", decryptErr)
 		utils.RespondWithError(w, 500, "Internal Server Error")
 		return
 	}
-	decryptedSegaPassword, decryptErr := utils.Decrypt(segaCreds.SegaPassword)
+	decryptedSegaPassword, decryptErr := utils.Decrypt(segaCreds.EncryptedSegaPassword)
 	if decryptErr != nil {
 		log.Printf("failed to decrypt SEGA password: %s", decryptErr)
 		utils.RespondWithError(w, 500, "Internal Server Error")
@@ -119,16 +91,15 @@ func (h *Handler) UpdateUserByMaiID(w http.ResponseWriter, r *http.Request) {
 	m := maimaiclient.New()
 	loginErr := m.Login(decryptedSegaID, decryptedSegaPassword)
 	if loginErr != nil {
-		log.Printf("Failed to login to maimai with SEGAID '%s': %s\n", segaCreds.SegaID, err)
+		log.Printf("Failed to login to maimai with SEGAID '%s': %s\n", segaCreds.EncryptedSegaID, err)
 		utils.RespondWithError(w, 400, "Invalid SegaID or password")
 		return
 	}
 
 	// scrape user and save to database
 	scrapeErr := scraper.ScrapeUser(m, h.queries, scraper.ScrapeUserParams{
+		ID:           user.ID,
 		UserID:       user.UserID,
-		GameName:     user.GameName,
-		TagLine:      user.TagLine,
 		LastPlayedAt: user.LastPlayedAt,
 	})
 

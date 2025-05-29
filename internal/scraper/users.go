@@ -29,12 +29,12 @@ func ScrapeAllUsers(pool *pgxpool.Pool) {
 	}
 
 	for _, u := range users {
-		decryptedSegaID, decryptErr := utils.Decrypt(u.SegaID)
+		decryptedSegaID, decryptErr := utils.Decrypt(u.EncryptedSegaID)
 		if decryptErr != nil {
 			log.Printf("failed to decrypt SEGA ID: %s", decryptErr)
 			return
 		}
-		decryptedSegaPassword, decryptErr := utils.Decrypt(u.SegaPassword)
+		decryptedSegaPassword, decryptErr := utils.Decrypt(u.EncryptedSegaPassword)
 		if decryptErr != nil {
 			log.Printf("failed to decrypt SEGA password: %s", decryptErr)
 			return
@@ -42,17 +42,16 @@ func ScrapeAllUsers(pool *pgxpool.Pool) {
 		m := maimaiclient.New()
 		err := m.Login(decryptedSegaID, decryptedSegaPassword)
 		if err != nil {
-			log.Printf("failed to login to maimai with SEGA ID '%s': %s\n", u.SegaID, err)
+			log.Printf("failed to login to maimai with SEGA ID '%s': %s\n", u.EncryptedSegaID, err)
 			return
 		}
 		scrapeUserErr := ScrapeUser(m, queries, ScrapeUserParams{
+			ID:           u.ID,
 			UserID:       u.UserID,
-			GameName:     u.GameName,
-			TagLine:      u.TagLine,
 			LastPlayedAt: u.LastPlayedAt,
 		})
 		if scrapeUserErr != nil {
-			log.Printf("ERROR failed to scrape user %s %s#%s: %s", u.UserID, u.GameName, u.TagLine, scrapeUserErr)
+			log.Printf("ERROR failed to scrape user %s: %s", u.UserID, scrapeUserErr)
 			return
 		}
 	}
@@ -61,9 +60,8 @@ func ScrapeAllUsers(pool *pgxpool.Pool) {
 }
 
 type ScrapeUserParams struct {
-	UserID       uuid.UUID
-	GameName     string
-	TagLine      string
+	ID           uuid.UUID
+	UserID       string
 	LastPlayedAt pgtype.Timestamp
 }
 
@@ -89,15 +87,13 @@ func ScrapeUser(m *maimaiclient.Client, queries *database.Queries, user ScrapeUs
 	}
 	_, createUserDataErr := queries.CreateUserData(context.Background(), database.CreateUserDataParams{
 		ID:              uuid.New(),
-		UserID:          user.UserID,
-		GameName:        user.GameName,
-		TagLine:         user.TagLine,
+		UserUuid:        user.ID,
 		Rating:          scrapedUserData.Rating,
 		SeasonPlayCount: scrapedUserData.SeasonPlayCount,
 		TotalPlayCount:  scrapedUserData.TotalPlayCount,
 	})
 	if createUserDataErr != nil {
-		return fmt.Errorf("failed to create user data for user '%s#%s': %s", user.GameName, user.TagLine, createUserDataErr)
+		return fmt.Errorf("failed to create user data for '%s': %s", user.UserID, createUserDataErr)
 	}
 
 	// scrape scores
@@ -110,7 +106,7 @@ func ScrapeUser(m *maimaiclient.Client, queries *database.Queries, user ScrapeUs
 
 	// update database
 	for _, score := range scores {
-		score.UserID = user.UserID
+		score.UserUuid = user.ID
 
 		// create new score
 		createScoreErr := createScore(queries, score)
@@ -189,10 +185,10 @@ func ScrapeUserData(m *maimaiclient.Client) (database.UserDatum, error) {
 // insert new score to database
 func createScore(queries *database.Queries, score database.Score) error {
 	_, createScoreErr := queries.CreateScore(context.Background(), database.CreateScoreParams{
-		ScoreID:       uuid.New(),
+		ID:            uuid.New(),
 		BeatmapID:     score.BeatmapID,
 		SongID:        score.SongID,
-		UserID:        score.UserID,
+		UserUuid:      score.UserUuid,
 		Accuracy:      score.Accuracy,
 		MaxCombo:      score.MaxCombo,
 		DxScore:       score.DxScore,
@@ -252,7 +248,7 @@ func updateBeatmapNoteCounts(queries *database.Queries, score database.Score) er
 	totalNotes := tap + hold + slide + touch + br
 
 	_, updateErr := queries.UpdateBeatmap(context.Background(), database.UpdateBeatmapParams{
-		BeatmapID:     score.BeatmapID,
+		ID:            score.BeatmapID,
 		SongID:        score.SongID,
 		Difficulty:    beatmap.Difficulty,
 		Level:         beatmap.Level,

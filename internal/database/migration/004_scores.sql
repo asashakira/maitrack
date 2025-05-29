@@ -1,9 +1,9 @@
 -- +goose Up
 create table scores (
-    score_id uuid primary key,
-    beatmap_id uuid not null references beatmaps (beatmap_id) on delete cascade,
-    song_id uuid not null references songs (song_id) on delete cascade,
-    user_id uuid not null references users (user_id) on delete cascade,
+    id uuid primary key,
+    beatmap_id uuid not null references beatmaps (id) on delete cascade,
+    song_id uuid not null references songs (id) on delete cascade,
+    user_uuid uuid not null references users (id) on delete cascade,
     accuracy text not null,
     max_combo int not null,
     dx_score int not null,
@@ -35,14 +35,14 @@ create table scores (
     fast int not null default 0,
     late int not null default 0,
     played_at timestamp not null,
-    created_at timestamp not null
+    created_at timestamp default now()
 );
-create index idx_scores_user_id on scores (user_id);
-create index idx_scores_song_id on scores (song_id);
+create index idx_scores_user_uuid on scores (user_uuid);
 create index idx_scores_beatmap_id on scores (beatmap_id);
+create index idx_scores_song_id on scores (song_id);
 
 -- +goose Down
 drop table if exists scores;
-drop index if exists idx_scores_user_id;
+drop index if exists idx_scores_user_uuid;
 drop index if exists idx_scores_song_id;
 drop index if exists idx_scores_beatmap_id;

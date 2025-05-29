@@ -109,7 +109,7 @@ func upsertSong(queries *sqlc.Queries, ms maimaisong) (sqlc.Song, error) {
 		if strings.Contains(getSongErr.Error(), "no rows in result set") {
 			// insert if it does not exist in DB
 			newSong, createSongErr := queries.CreateSong(context.Background(), sqlc.CreateSongParams{
-				SongID:      uuid.New(),
+				ID:          uuid.New(),
 				AltKey:      utils.CreateAltKey(ms.Title, ms.Artist),
 				Title:       ms.Title,
 				Artist:      ms.Artist,
@@ -141,7 +141,7 @@ func upsertSong(queries *sqlc.Queries, ms maimaisong) (sqlc.Song, error) {
 
 	// update song
 	updatedSong, updateErr := queries.UpdateSong(context.Background(), sqlc.UpdateSongParams{
-		SongID:      song.SongID,
+		ID:          song.ID,
 		AltKey:      utils.CreateAltKey(ms.Title, ms.Artist),
 		Title:       ms.Title,
 		Artist:      ms.Artist,
@@ -231,7 +231,7 @@ func upsertBeatmap(queries *sqlc.Queries, songID uuid.UUID, difficulty, level, b
 		if strings.Contains(getBeatmapErr.Error(), "no rows in result set") {
 			// insert if it does not exist in DB
 			newBeatmap, createBeatmapErr := queries.CreateBeatmap(context.Background(), sqlc.CreateBeatmapParams{
-				BeatmapID:  uuid.New(),
+				ID:         uuid.New(),
 				SongID:     songID,
 				Difficulty: difficulty,
 				Level:      level,

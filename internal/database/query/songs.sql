@@ -1,6 +1,6 @@
 -- name: CreateSong :one
 insert into songs (
-    song_id,
+    id,
     alt_key,
     title,
     artist,
@@ -13,16 +13,14 @@ insert into songs (
     is_new,
     sort,
     release_date,
-    delete_date,
-    updated_at,
-    created_at
+    delete_date
 )
-values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, now(), now())
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 returning *;
 
 -- name: GetAllSongs :many
 select
-    songs.song_id,
+    songs.id,
     songs.title,
     songs.artist,
     songs.genre,
@@ -39,7 +37,7 @@ select
             select
                 json_agg(
                     jsonb_build_object(
-                        'beatmap_id', beatmaps.beatmap_id,
+                        'beatmap_id', beatmaps.id,
                         'difficulty', beatmaps.difficulty,
                         'level', beatmaps.level,
                         'internal_level', beatmaps.internal_level,
@@ -55,7 +53,7 @@ select
                     )
                 )
             from beatmaps
-            where beatmaps.song_id = songs.song_id
+            where beatmaps.song_id = songs.id
         ),
         '[]'
     ) as beatmaps
@@ -64,7 +62,7 @@ order by songs.release_date desc, songs.sort desc;
 
 -- name: GetSongByID :one
 select
-    songs.song_id,
+    songs.id,
     songs.title,
     songs.artist,
     songs.genre,
@@ -81,7 +79,7 @@ select
             select
                 json_agg(
                     jsonb_build_object(
-                        'beatmapID', beatmaps.beatmap_id,
+                        'beatmapID', beatmaps.id,
                         'difficulty', beatmaps.difficulty,
                         'level', beatmaps.level,
                         'internalLevel', beatmaps.internal_level,
@@ -97,12 +95,12 @@ select
                     )
                 )
             from beatmaps
-            where beatmaps.song_id = songs.song_id
+            where beatmaps.song_id = songs.id
         ),
         '[]'
     ) as beatmaps
 from songs
-where songs.song_id = $1;
+where songs.id = $1;
 
 -- name: GetSongsByTitle :many
 select *
@@ -136,5 +134,5 @@ set
     release_date = $12,
     delete_date = $13,
     updated_at = now()
-where song_id = $14
+where id = $14
 returning *;

@@ -9,13 +9,13 @@ create table songs (
     image_url text not null,
     version text not null,
     sort text not null,
-    is_utage bool default false,
-    is_available bool default true,
-    is_new bool default false,
+    is_utage bool not null default false,
+    is_available bool not null default true,
+    is_new bool not null default false,
     release_date date,
     delete_date date,
-    updated_at timestamp not null,
-    created_at timestamp not null,
+    updated_at timestamp default now(),
+    created_at timestamp default now(),
     unique (title, artist)
 );
 

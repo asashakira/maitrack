@@ -234,15 +234,15 @@ func getSongAndBeatmapID(queries *database.Queries, title, difficulty, beatmapTy
 
 		// get beatmap
 		beatmap, getBeatmapErr := queries.GetBeatmapBySongIDDifficultyAndType(context.Background(), database.GetBeatmapBySongIDDifficultyAndTypeParams{
-			SongID:     s.SongID,
+			SongID:     s.ID,
 			Difficulty: difficulty,
 			Type:       beatmapType,
 		})
 		if getBeatmapErr != nil {
-			return uuid.Nil, uuid.Nil, fmt.Errorf("beatmap with details {%s, %s, %s, %s} not found: %w", s.SongID, s.Title, difficulty, beatmapType, getBeatmapErr)
+			return uuid.Nil, uuid.Nil, fmt.Errorf("beatmap with details {%s, %s, %s, %s} not found: %w", s.ID, s.Title, difficulty, beatmapType, getBeatmapErr)
 		}
 		songID = beatmap.SongID
-		beatmapID = beatmap.BeatmapID
+		beatmapID = beatmap.ID
 	}
 	return songID, beatmapID, nil
 }

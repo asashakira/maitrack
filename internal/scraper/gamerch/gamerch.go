@@ -123,7 +123,7 @@ func (g *Gamerch) parseGamerchData(doc *goquery.Document) (Song, []Beatmap, erro
 
 		// 譜面データ(beatmap data table)
 		case topLeftCell == "Lv":
-			b, err := g.handleBeatmapTable(table, song.SongID)
+			b, err := g.handleBeatmapTable(table, song.ID)
 			if err != nil {
 				log.Printf("handle beatmap table error: %s", err)
 				return
@@ -199,7 +199,7 @@ func (g *Gamerch) getSongByDatabase(gamerchSong Song) (Song, error) {
 	}
 
 	song := Song{
-		SongID:      s.SongID.String(),
+		ID:          s.ID.String(),
 		AltKey:      s.AltKey,
 		Title:       s.Title,
 		Artist:      s.Artist,

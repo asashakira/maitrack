@@ -25,7 +25,7 @@ func ScrapeSongsAndBeatmaps(pool *pgxpool.Pool) {
 			log.Println(err)
 		}
 
-		err = handleBeatmaps(queries, song.SongID, ms)
+		err = handleBeatmaps(queries, song.ID, ms)
 		if err != nil {
 			log.Println(err)
 		}
