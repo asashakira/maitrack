@@ -18,7 +18,6 @@ import (
 
 func (h *Handler) CreateSong(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		AltKey      string `json:"altkey"`
 		Title       string `json:"title"`
 		Artist      string `json:"artist"`
 		Genre       string `json:"genre"`
@@ -55,8 +54,7 @@ func (h *Handler) CreateSong(w http.ResponseWriter, r *http.Request) {
 	}
 
 	song, err := h.queries.CreateSong(r.Context(), database.CreateSongParams{
-		SongID:      uuid.New(),
-		AltKey:      params.AltKey,
+		ID:          uuid.New(),
 		Title:       params.Title,
 		Artist:      params.Artist,
 		Genre:       params.Genre,
@@ -86,6 +84,31 @@ func (h *Handler) GetAllSongs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	utils.RespondWithJSON(w, 200, songs)
+}
+
+func (h *Handler) GetSongByID(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		utils.RespondWithError(w, 400, fmt.Sprintf("error parsing songID: %s", err))
+		return
+	}
+
+	song, err := h.queries.GetSongByID(r.Context(), id)
+	if err != nil {
+		// Handle "no rows found"
+		if errors.Is(err, pgx.ErrNoRows) {
+			errorMessage := fmt.Sprintf("No song found with provided id '%s': %s", id, err)
+			log.Println(errorMessage)
+			utils.RespondWithError(w, 404, errorMessage)
+			return
+		}
+		// Handle other errors
+		errorMessage := fmt.Sprintf("GetSongByID %v", err)
+		log.Println(errorMessage)
+		utils.RespondWithError(w, 400, errorMessage)
+		return
+	}
+	utils.RespondWithJSON(w, 200, song)
 }
 
 // get song using altkey
@@ -149,7 +172,6 @@ func (h *Handler) GetSongsByTitle(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		SongID      uuid.UUID `json:"songID"`
-		AltKey      *string   `json:"altkey,omitempty"`
 		Title       *string   `json:"title,omitempty"`
 		Artist      *string   `json:"artist,omitempty"`
 		Genre       *string   `json:"genre,omitempty"`
@@ -170,7 +192,7 @@ func (h *Handler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch existing song
-	song, err := h.queries.GetSongBySongID(r.Context(), params.SongID)
+	song, err := h.queries.GetSongByID(r.Context(), params.SongID)
 	if err != nil {
 		errorMessage := fmt.Sprintf("song not found %v", err)
 		log.Println(errorMessage)
@@ -202,8 +224,7 @@ func (h *Handler) UpdateSong(w http.ResponseWriter, r *http.Request) {
 
 	// Update only the fields provided in the request
 	updatedSong, err := h.queries.UpdateSong(r.Context(), database.UpdateSongParams{
-		SongID:      song.SongID,
-		AltKey:      ifNotNil(params.AltKey, song.AltKey),
+		ID:          song.ID,
 		Title:       ifNotNil(params.Title, song.Title),
 		Artist:      ifNotNil(params.Artist, song.Artist),
 		Genre:       ifNotNil(params.Genre, song.Genre),

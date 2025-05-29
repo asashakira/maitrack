@@ -1,42 +1,43 @@
 -- +goose Up
 create table users (
-    user_id uuid primary key,
-    username text not null unique,
-    password text not null,
-    sega_id text not null unique,
-    sega_password text not null,
-    game_name text not null,
-    tag_line text not null,
-    updated_at timestamp not null,
-    created_at timestamp not null,
-    unique (game_name, tag_line)
+    id uuid primary key,
+    user_id text not null unique,
+    email text unique,
+    email_verified boolean default false,
+    display_name text not null,
+    password_hash text not null,
+    encrypted_sega_id text not null,
+    encrypted_sega_password text not null,
+    last_played_at timestamp not null,
+    last_scraped_at timestamp not null,
+    scrape_status text default 'idle',
+    deleted_at timestamp,
+    updated_at timestamp default now(),
+    created_at timestamp default now()
 );
-create index idx_users_username on users (username);
-create index idx_users_sega_id on users (sega_id);
-create index idx_users_mai_id on users (game_name, tag_line);
+create index idx_users_user_id on users (user_id);
 
 create table user_data (
     id uuid primary key,
-    user_id uuid not null references users (user_id) on delete cascade,
-    game_name text not null,
-    tag_line text not null,
+    user_uuid uuid not null references users (id) on delete cascade,
     rating int not null,
     season_play_count int not null,
     total_play_count int not null,
-    created_at timestamp not null
+    created_at timestamp default now()
 );
 
 create table user_metadata (
-    user_id uuid primary key references users (user_id) on delete cascade,
-    last_played_at timestamp not null,
-    updated_at timestamp not null,
-    created_at timestamp not null
+    user_uuid uuid primary key references users (id) on delete cascade,
+    bio text,
+    profile_image_url text,
+    location text,
+    twitter_id text,
+    updated_at timestamp default now(),
+    created_at timestamp default now()
 );
 
 -- +goose Down
-drop index if exists idx_users_username;
-drop index if exists idx_users_sega_id;
-drop index if exists idx_users_mai_id;
+drop index if exists idx_users_user_id;
 drop table if exists user_data cascade;
 drop table if exists user_metadata cascade;
 drop table if exists users;

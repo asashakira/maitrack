@@ -14,7 +14,7 @@ import (
 
 const createBeatmap = `-- name: CreateBeatmap :one
 insert into beatmaps (
-    beatmap_id,
+    id,
     song_id,
     difficulty,
     level,
@@ -27,32 +27,14 @@ insert into beatmaps (
     touch,
     break,
     note_designer,
-    max_dx_score,
-    updated_at,
-    created_at
+    max_dx_score
 )
-values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, now(), now())
-returning
-    beatmap_id,
-    song_id,
-    difficulty,
-    level,
-    internal_level,
-    type,
-    total_notes,
-    tap,
-    hold,
-    slide,
-    touch,
-    break,
-    note_designer,
-    max_dx_score,
-    updated_at,
-    created_at
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+returning id, song_id, difficulty, level, internal_level, type, total_notes, tap, hold, slide, touch, break, note_designer, max_dx_score, updated_at, created_at
 `
 
 type CreateBeatmapParams struct {
-	BeatmapID     uuid.UUID      `json:"beatmapID"`
+	ID            uuid.UUID      `json:"id"`
 	SongID        uuid.UUID      `json:"songID"`
 	Difficulty    string         `json:"difficulty"`
 	Level         string         `json:"level"`
@@ -70,7 +52,7 @@ type CreateBeatmapParams struct {
 
 func (q *Queries) CreateBeatmap(ctx context.Context, arg CreateBeatmapParams) (Beatmap, error) {
 	row := q.db.QueryRow(ctx, createBeatmap,
-		arg.BeatmapID,
+		arg.ID,
 		arg.SongID,
 		arg.Difficulty,
 		arg.Level,
@@ -87,7 +69,7 @@ func (q *Queries) CreateBeatmap(ctx context.Context, arg CreateBeatmapParams) (B
 	)
 	var i Beatmap
 	err := row.Scan(
-		&i.BeatmapID,
+		&i.ID,
 		&i.SongID,
 		&i.Difficulty,
 		&i.Level,
@@ -109,7 +91,7 @@ func (q *Queries) CreateBeatmap(ctx context.Context, arg CreateBeatmapParams) (B
 
 const getAllBeatmaps = `-- name: GetAllBeatmaps :many
 select
-    beatmaps.beatmap_id,
+    beatmaps.id,
     beatmaps.song_id,
     beatmaps.difficulty,
     beatmaps.level,
@@ -130,11 +112,11 @@ select
     songs.image_url,
     songs.version
 from beatmaps
-inner join songs on beatmaps.song_id = songs.song_id
+inner join songs on beatmaps.song_id = songs.id
 `
 
 type GetAllBeatmapsRow struct {
-	BeatmapID     uuid.UUID      `json:"beatmapID"`
+	ID            uuid.UUID      `json:"id"`
 	SongID        uuid.UUID      `json:"songID"`
 	Difficulty    string         `json:"difficulty"`
 	Level         string         `json:"level"`
@@ -166,7 +148,7 @@ func (q *Queries) GetAllBeatmaps(ctx context.Context) ([]GetAllBeatmapsRow, erro
 	for rows.Next() {
 		var i GetAllBeatmapsRow
 		if err := rows.Scan(
-			&i.BeatmapID,
+			&i.ID,
 			&i.SongID,
 			&i.Difficulty,
 			&i.Level,
@@ -199,7 +181,7 @@ func (q *Queries) GetAllBeatmaps(ctx context.Context) ([]GetAllBeatmapsRow, erro
 
 const getBeatmapByBeatmapID = `-- name: GetBeatmapByBeatmapID :one
 select
-    beatmaps.beatmap_id,
+    beatmaps.id,
     beatmaps.song_id,
     beatmaps.difficulty,
     beatmaps.level,
@@ -220,12 +202,12 @@ select
     songs.image_url,
     songs.version
 from beatmaps
-inner join songs on beatmaps.song_id = songs.song_id
-where beatmaps.beatmap_id = $1
+inner join songs on beatmaps.song_id = songs.id
+where beatmaps.id = $1
 `
 
 type GetBeatmapByBeatmapIDRow struct {
-	BeatmapID     uuid.UUID      `json:"beatmapID"`
+	ID            uuid.UUID      `json:"id"`
 	SongID        uuid.UUID      `json:"songID"`
 	Difficulty    string         `json:"difficulty"`
 	Level         string         `json:"level"`
@@ -247,11 +229,11 @@ type GetBeatmapByBeatmapIDRow struct {
 	Version       string         `json:"version"`
 }
 
-func (q *Queries) GetBeatmapByBeatmapID(ctx context.Context, beatmapID uuid.UUID) (GetBeatmapByBeatmapIDRow, error) {
-	row := q.db.QueryRow(ctx, getBeatmapByBeatmapID, beatmapID)
+func (q *Queries) GetBeatmapByBeatmapID(ctx context.Context, id uuid.UUID) (GetBeatmapByBeatmapIDRow, error) {
+	row := q.db.QueryRow(ctx, getBeatmapByBeatmapID, id)
 	var i GetBeatmapByBeatmapIDRow
 	err := row.Scan(
-		&i.BeatmapID,
+		&i.ID,
 		&i.SongID,
 		&i.Difficulty,
 		&i.Level,
@@ -276,7 +258,7 @@ func (q *Queries) GetBeatmapByBeatmapID(ctx context.Context, beatmapID uuid.UUID
 }
 
 const getBeatmapBySongIDDifficultyAndType = `-- name: GetBeatmapBySongIDDifficultyAndType :one
-select beatmap_id, song_id, difficulty, level, internal_level, type, total_notes, tap, hold, slide, touch, break, note_designer, max_dx_score, updated_at, created_at
+select id, song_id, difficulty, level, internal_level, type, total_notes, tap, hold, slide, touch, break, note_designer, max_dx_score, updated_at, created_at
 from beatmaps
 where song_id = $1 and difficulty = $2 and type = $3
 `
@@ -291,7 +273,7 @@ func (q *Queries) GetBeatmapBySongIDDifficultyAndType(ctx context.Context, arg G
 	row := q.db.QueryRow(ctx, getBeatmapBySongIDDifficultyAndType, arg.SongID, arg.Difficulty, arg.Type)
 	var i Beatmap
 	err := row.Scan(
-		&i.BeatmapID,
+		&i.ID,
 		&i.SongID,
 		&i.Difficulty,
 		&i.Level,
@@ -313,7 +295,7 @@ func (q *Queries) GetBeatmapBySongIDDifficultyAndType(ctx context.Context, arg G
 
 const getBeatmapsBySongID = `-- name: GetBeatmapsBySongID :many
 select
-    beatmaps.beatmap_id,
+    beatmaps.id,
     beatmaps.song_id,
     beatmaps.difficulty,
     beatmaps.level,
@@ -339,7 +321,7 @@ where beatmaps.song_id = $1
 `
 
 type GetBeatmapsBySongIDRow struct {
-	BeatmapID     uuid.UUID      `json:"beatmapID"`
+	ID            uuid.UUID      `json:"id"`
 	SongID        uuid.UUID      `json:"songID"`
 	Difficulty    string         `json:"difficulty"`
 	Level         string         `json:"level"`
@@ -371,7 +353,7 @@ func (q *Queries) GetBeatmapsBySongID(ctx context.Context, songID uuid.UUID) ([]
 	for rows.Next() {
 		var i GetBeatmapsBySongIDRow
 		if err := rows.Scan(
-			&i.BeatmapID,
+			&i.ID,
 			&i.SongID,
 			&i.Difficulty,
 			&i.Level,
@@ -419,12 +401,12 @@ set
     note_designer = $13,
     max_dx_score = $14,
     updated_at = now()
-where beatmap_id = $1
-returning beatmap_id, song_id, difficulty, level, internal_level, type, total_notes, tap, hold, slide, touch, break, note_designer, max_dx_score, updated_at, created_at
+where id = $1
+returning id, song_id, difficulty, level, internal_level, type, total_notes, tap, hold, slide, touch, break, note_designer, max_dx_score, updated_at, created_at
 `
 
 type UpdateBeatmapParams struct {
-	BeatmapID     uuid.UUID      `json:"beatmapID"`
+	ID            uuid.UUID      `json:"id"`
 	SongID        uuid.UUID      `json:"songID"`
 	Difficulty    string         `json:"difficulty"`
 	Level         string         `json:"level"`
@@ -442,7 +424,7 @@ type UpdateBeatmapParams struct {
 
 func (q *Queries) UpdateBeatmap(ctx context.Context, arg UpdateBeatmapParams) (Beatmap, error) {
 	row := q.db.QueryRow(ctx, updateBeatmap,
-		arg.BeatmapID,
+		arg.ID,
 		arg.SongID,
 		arg.Difficulty,
 		arg.Level,
@@ -459,7 +441,7 @@ func (q *Queries) UpdateBeatmap(ctx context.Context, arg UpdateBeatmapParams) (B
 	)
 	var i Beatmap
 	err := row.Scan(
-		&i.BeatmapID,
+		&i.ID,
 		&i.SongID,
 		&i.Difficulty,
 		&i.Level,

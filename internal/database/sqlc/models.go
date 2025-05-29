@@ -10,7 +10,7 @@ import (
 )
 
 type Beatmap struct {
-	BeatmapID     uuid.UUID        `json:"beatmapID"`
+	ID            uuid.UUID        `json:"id"`
 	SongID        uuid.UUID        `json:"songID"`
 	Difficulty    string           `json:"difficulty"`
 	Level         string           `json:"level"`
@@ -29,10 +29,10 @@ type Beatmap struct {
 }
 
 type Score struct {
-	ScoreID       uuid.UUID        `json:"scoreID"`
+	ID            uuid.UUID        `json:"id"`
 	BeatmapID     uuid.UUID        `json:"beatmapID"`
 	SongID        uuid.UUID        `json:"songID"`
-	UserID        uuid.UUID        `json:"userID"`
+	UserUuid      uuid.UUID        `json:"userUuid"`
 	Accuracy      string           `json:"accuracy"`
 	MaxCombo      int32            `json:"maxCombo"`
 	DxScore       int32            `json:"dxScore"`
@@ -68,7 +68,7 @@ type Score struct {
 }
 
 type Song struct {
-	SongID      uuid.UUID        `json:"songID"`
+	ID          uuid.UUID        `json:"id"`
 	AltKey      string           `json:"altKey"`
 	Title       string           `json:"title"`
 	Artist      string           `json:"artist"`
@@ -76,8 +76,10 @@ type Song struct {
 	Bpm         string           `json:"bpm"`
 	ImageUrl    string           `json:"imageUrl"`
 	Version     string           `json:"version"`
+	Sort        string           `json:"sort"`
 	IsUtage     bool             `json:"isUtage"`
 	IsAvailable bool             `json:"isAvailable"`
+	IsNew       bool             `json:"isNew"`
 	ReleaseDate pgtype.Date      `json:"releaseDate"`
 	DeleteDate  pgtype.Date      `json:"deleteDate"`
 	UpdatedAt   pgtype.Timestamp `json:"updatedAt"`
@@ -85,22 +87,25 @@ type Song struct {
 }
 
 type User struct {
-	UserID       uuid.UUID        `json:"userID"`
-	Username     string           `json:"username"`
-	Password     string           `json:"password"`
-	SegaID       string           `json:"segaID"`
-	SegaPassword string           `json:"segaPassword"`
-	GameName     string           `json:"gameName"`
-	TagLine      string           `json:"tagLine"`
-	UpdatedAt    pgtype.Timestamp `json:"updatedAt"`
-	CreatedAt    pgtype.Timestamp `json:"createdAt"`
+	ID                    uuid.UUID        `json:"id"`
+	UserID                string           `json:"userID"`
+	Email                 pgtype.Text      `json:"email"`
+	EmailVerified         pgtype.Bool      `json:"emailVerified"`
+	DisplayName           string           `json:"displayName"`
+	PasswordHash          string           `json:"passwordHash"`
+	EncryptedSegaID       string           `json:"encryptedSegaID"`
+	EncryptedSegaPassword string           `json:"encryptedSegaPassword"`
+	LastPlayedAt          pgtype.Timestamp `json:"lastPlayedAt"`
+	LastScrapedAt         pgtype.Timestamp `json:"lastScrapedAt"`
+	ScrapeStatus          pgtype.Text      `json:"scrapeStatus"`
+	DeletedAt             pgtype.Timestamp `json:"deletedAt"`
+	UpdatedAt             pgtype.Timestamp `json:"updatedAt"`
+	CreatedAt             pgtype.Timestamp `json:"createdAt"`
 }
 
 type UserDatum struct {
 	ID              uuid.UUID        `json:"id"`
-	UserID          uuid.UUID        `json:"userID"`
-	GameName        string           `json:"gameName"`
-	TagLine         string           `json:"tagLine"`
+	UserUuid        uuid.UUID        `json:"userUuid"`
 	Rating          int32            `json:"rating"`
 	SeasonPlayCount int32            `json:"seasonPlayCount"`
 	TotalPlayCount  int32            `json:"totalPlayCount"`
@@ -108,8 +113,11 @@ type UserDatum struct {
 }
 
 type UserMetadatum struct {
-	UserID       uuid.UUID        `json:"userID"`
-	LastPlayedAt pgtype.Timestamp `json:"lastPlayedAt"`
-	UpdatedAt    pgtype.Timestamp `json:"updatedAt"`
-	CreatedAt    pgtype.Timestamp `json:"createdAt"`
+	UserUuid        uuid.UUID        `json:"userUuid"`
+	Bio             pgtype.Text      `json:"bio"`
+	ProfileImageUrl pgtype.Text      `json:"profileImageUrl"`
+	Location        pgtype.Text      `json:"location"`
+	TwitterID       pgtype.Text      `json:"twitterID"`
+	UpdatedAt       pgtype.Timestamp `json:"updatedAt"`
+	CreatedAt       pgtype.Timestamp `json:"createdAt"`
 }

@@ -14,31 +14,18 @@ import (
 const createUserData = `-- name: CreateUserData :one
 insert into user_data (
     id,
-    user_id,
-    game_name,
-    tag_line,
+    user_uuid,
     rating,
     season_play_count,
-    total_play_count,
-    created_at
+    total_play_count
 )
-values ($1, $2, $3, $4, $5, $6, $7, now())
-returning
-    id,
-    user_id,
-    game_name,
-    tag_line,
-    rating,
-    season_play_count,
-    total_play_count,
-    created_at
+values ($1, $2, $3, $4, $5)
+returning id, user_uuid, rating, season_play_count, total_play_count, created_at
 `
 
 type CreateUserDataParams struct {
 	ID              uuid.UUID `json:"id"`
-	UserID          uuid.UUID `json:"userID"`
-	GameName        string    `json:"gameName"`
-	TagLine         string    `json:"tagLine"`
+	UserUuid        uuid.UUID `json:"userUuid"`
 	Rating          int32     `json:"rating"`
 	SeasonPlayCount int32     `json:"seasonPlayCount"`
 	TotalPlayCount  int32     `json:"totalPlayCount"`
@@ -47,9 +34,7 @@ type CreateUserDataParams struct {
 func (q *Queries) CreateUserData(ctx context.Context, arg CreateUserDataParams) (UserDatum, error) {
 	row := q.db.QueryRow(ctx, createUserData,
 		arg.ID,
-		arg.UserID,
-		arg.GameName,
-		arg.TagLine,
+		arg.UserUuid,
 		arg.Rating,
 		arg.SeasonPlayCount,
 		arg.TotalPlayCount,
@@ -57,9 +42,7 @@ func (q *Queries) CreateUserData(ctx context.Context, arg CreateUserDataParams) 
 	var i UserDatum
 	err := row.Scan(
 		&i.ID,
-		&i.UserID,
-		&i.GameName,
-		&i.TagLine,
+		&i.UserUuid,
 		&i.Rating,
 		&i.SeasonPlayCount,
 		&i.TotalPlayCount,
@@ -68,67 +51,26 @@ func (q *Queries) CreateUserData(ctx context.Context, arg CreateUserDataParams) 
 	return i, err
 }
 
-const getUserDataByMaiID = `-- name: GetUserDataByMaiID :one
+const getUserDataByUserUUID = `-- name: GetUserDataByUserUUID :one
 select
     id,
-    user_id,
-    game_name,
-    tag_line,
+    user_uuid,
     rating,
     season_play_count,
     total_play_count,
     created_at
 from user_data
-where game_name = $1 and tag_line = $2
+where user_uuid = $1
 order by created_at desc
 limit 1
 `
 
-type GetUserDataByMaiIDParams struct {
-	GameName string `json:"gameName"`
-	TagLine  string `json:"tagLine"`
-}
-
-func (q *Queries) GetUserDataByMaiID(ctx context.Context, arg GetUserDataByMaiIDParams) (UserDatum, error) {
-	row := q.db.QueryRow(ctx, getUserDataByMaiID, arg.GameName, arg.TagLine)
+func (q *Queries) GetUserDataByUserUUID(ctx context.Context, userUuid uuid.UUID) (UserDatum, error) {
+	row := q.db.QueryRow(ctx, getUserDataByUserUUID, userUuid)
 	var i UserDatum
 	err := row.Scan(
 		&i.ID,
-		&i.UserID,
-		&i.GameName,
-		&i.TagLine,
-		&i.Rating,
-		&i.SeasonPlayCount,
-		&i.TotalPlayCount,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
-const getUserDataByUserID = `-- name: GetUserDataByUserID :one
-select
-    id,
-    user_id,
-    game_name,
-    tag_line,
-    rating,
-    season_play_count,
-    total_play_count,
-    created_at
-from user_data
-where user_id = $1
-order by created_at desc
-limit 1
-`
-
-func (q *Queries) GetUserDataByUserID(ctx context.Context, userID uuid.UUID) (UserDatum, error) {
-	row := q.db.QueryRow(ctx, getUserDataByUserID, userID)
-	var i UserDatum
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.GameName,
-		&i.TagLine,
+		&i.UserUuid,
 		&i.Rating,
 		&i.SeasonPlayCount,
 		&i.TotalPlayCount,

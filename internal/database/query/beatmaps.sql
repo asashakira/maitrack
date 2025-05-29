@@ -1,6 +1,6 @@
 -- name: CreateBeatmap :one
 insert into beatmaps (
-    beatmap_id,
+    id,
     song_id,
     difficulty,
     level,
@@ -13,32 +13,15 @@ insert into beatmaps (
     touch,
     break,
     note_designer,
-    max_dx_score,
-    updated_at,
-    created_at
+    max_dx_score
 )
-values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, now(), now())
-returning
-    beatmap_id,
-    song_id,
-    difficulty,
-    level,
-    internal_level,
-    type,
-    total_notes,
-    tap,
-    hold,
-    slide,
-    touch,
-    break,
-    note_designer,
-    max_dx_score,
-    updated_at,
-    created_at;
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+returning *;
+
 
 -- name: GetAllBeatmaps :many
 select
-    beatmaps.beatmap_id,
+    beatmaps.id,
     beatmaps.song_id,
     beatmaps.difficulty,
     beatmaps.level,
@@ -59,11 +42,12 @@ select
     songs.image_url,
     songs.version
 from beatmaps
-inner join songs on beatmaps.song_id = songs.song_id;
+inner join songs on beatmaps.song_id = songs.id;
+
 
 -- name: GetBeatmapByBeatmapID :one
 select
-    beatmaps.beatmap_id,
+    beatmaps.id,
     beatmaps.song_id,
     beatmaps.difficulty,
     beatmaps.level,
@@ -84,12 +68,13 @@ select
     songs.image_url,
     songs.version
 from beatmaps
-inner join songs on beatmaps.song_id = songs.song_id
-where beatmaps.beatmap_id = $1;
+inner join songs on beatmaps.song_id = songs.id
+where beatmaps.id = $1;
+
 
 -- name: GetBeatmapsBySongID :many
 select
-    beatmaps.beatmap_id,
+    beatmaps.id,
     beatmaps.song_id,
     beatmaps.difficulty,
     beatmaps.level,
@@ -135,5 +120,5 @@ set
     note_designer = $13,
     max_dx_score = $14,
     updated_at = now()
-where beatmap_id = $1
+where id = $1
 returning *;

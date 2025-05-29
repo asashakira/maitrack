@@ -16,9 +16,10 @@ func FormatDate(s string) string {
 	return strings.ReplaceAll(s, "/", "-")
 }
 
-func StringToInt32(s string) (int32, error) {
-	// Convert string to int
-	value, err := strconv.Atoi(s) // Converts to int
+// strips everything but numbers from a string and convert to int32
+func ConvertStringToInt32(s string) (int32, error) {
+	re := regexp.MustCompile(`[0-9]+`)
+	value, err := strconv.Atoi(strings.Join(re.FindAllString(s, -1), ""))
 	if err != nil {
 		return 0, err
 	}

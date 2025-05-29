@@ -14,26 +14,39 @@ import (
 
 const createUserMetadata = `-- name: CreateUserMetadata :one
 insert into user_metadata (
-    user_id,
-    last_played_at,
-    updated_at,
-    created_at
+    user_uuid,
+    bio,
+    profile_image_url,
+    location,
+    twitter_id
 )
-values ($1, $2, now(), now())
-returning user_id, last_played_at, updated_at, created_at
+values ($1, $2, $3, $4, $5)
+returning user_uuid, bio, profile_image_url, location, twitter_id, updated_at, created_at
 `
 
 type CreateUserMetadataParams struct {
-	UserID       uuid.UUID        `json:"userID"`
-	LastPlayedAt pgtype.Timestamp `json:"lastPlayedAt"`
+	UserUuid        uuid.UUID   `json:"userUuid"`
+	Bio             pgtype.Text `json:"bio"`
+	ProfileImageUrl pgtype.Text `json:"profileImageUrl"`
+	Location        pgtype.Text `json:"location"`
+	TwitterID       pgtype.Text `json:"twitterID"`
 }
 
 func (q *Queries) CreateUserMetadata(ctx context.Context, arg CreateUserMetadataParams) (UserMetadatum, error) {
-	row := q.db.QueryRow(ctx, createUserMetadata, arg.UserID, arg.LastPlayedAt)
+	row := q.db.QueryRow(ctx, createUserMetadata,
+		arg.UserUuid,
+		arg.Bio,
+		arg.ProfileImageUrl,
+		arg.Location,
+		arg.TwitterID,
+	)
 	var i UserMetadatum
 	err := row.Scan(
-		&i.UserID,
-		&i.LastPlayedAt,
+		&i.UserUuid,
+		&i.Bio,
+		&i.ProfileImageUrl,
+		&i.Location,
+		&i.TwitterID,
 		&i.UpdatedAt,
 		&i.CreatedAt,
 	)
@@ -41,21 +54,20 @@ func (q *Queries) CreateUserMetadata(ctx context.Context, arg CreateUserMetadata
 }
 
 const getUserMetadataByUserID = `-- name: GetUserMetadataByUserID :one
-select
-    user_id,
-    last_played_at,
-    updated_at,
-    created_at
+select user_uuid, bio, profile_image_url, location, twitter_id, updated_at, created_at
 from user_metadata
-where user_id = $1
+where user_uuid = $1
 `
 
-func (q *Queries) GetUserMetadataByUserID(ctx context.Context, userID uuid.UUID) (UserMetadatum, error) {
-	row := q.db.QueryRow(ctx, getUserMetadataByUserID, userID)
+func (q *Queries) GetUserMetadataByUserID(ctx context.Context, userUuid uuid.UUID) (UserMetadatum, error) {
+	row := q.db.QueryRow(ctx, getUserMetadataByUserID, userUuid)
 	var i UserMetadatum
 	err := row.Scan(
-		&i.UserID,
-		&i.LastPlayedAt,
+		&i.UserUuid,
+		&i.Bio,
+		&i.ProfileImageUrl,
+		&i.Location,
+		&i.TwitterID,
 		&i.UpdatedAt,
 		&i.CreatedAt,
 	)
@@ -65,23 +77,38 @@ func (q *Queries) GetUserMetadataByUserID(ctx context.Context, userID uuid.UUID)
 const updateUserMetadata = `-- name: UpdateUserMetadata :one
 update user_metadata
 set
-    last_played_at = $2,
+    bio = $2,
+    profile_image_url = $3,
+    location = $4,
+    twitter_id = $5,
     updated_at = now()
-where user_id = $1
-returning user_id, last_played_at, updated_at, created_at
+where user_uuid = $1
+returning user_uuid, bio, profile_image_url, location, twitter_id, updated_at, created_at
 `
 
 type UpdateUserMetadataParams struct {
-	UserID       uuid.UUID        `json:"userID"`
-	LastPlayedAt pgtype.Timestamp `json:"lastPlayedAt"`
+	UserUuid        uuid.UUID   `json:"userUuid"`
+	Bio             pgtype.Text `json:"bio"`
+	ProfileImageUrl pgtype.Text `json:"profileImageUrl"`
+	Location        pgtype.Text `json:"location"`
+	TwitterID       pgtype.Text `json:"twitterID"`
 }
 
 func (q *Queries) UpdateUserMetadata(ctx context.Context, arg UpdateUserMetadataParams) (UserMetadatum, error) {
-	row := q.db.QueryRow(ctx, updateUserMetadata, arg.UserID, arg.LastPlayedAt)
+	row := q.db.QueryRow(ctx, updateUserMetadata,
+		arg.UserUuid,
+		arg.Bio,
+		arg.ProfileImageUrl,
+		arg.Location,
+		arg.TwitterID,
+	)
 	var i UserMetadatum
 	err := row.Scan(
-		&i.UserID,
-		&i.LastPlayedAt,
+		&i.UserUuid,
+		&i.Bio,
+		&i.ProfileImageUrl,
+		&i.Location,
+		&i.TwitterID,
 		&i.UpdatedAt,
 		&i.CreatedAt,
 	)

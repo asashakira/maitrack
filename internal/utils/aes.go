@@ -3,38 +3,45 @@ package utils
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"os"
 )
 
-func Encode(b []byte) string {
+func encode(b []byte) string {
 	return base64.StdEncoding.EncodeToString(b)
 }
 
 func Encrypt(text string) (string, error) {
+	plainText := []byte(text)
+
 	secretKey := os.Getenv("SECRET_KEY")
 	if secretKey == "" {
-		return "", fmt.Errorf("secretKey not found")
-	}
-	iv := os.Getenv("IV")
-	if iv == "" {
-		return "", fmt.Errorf("initialization vector not found")
+		return "", fmt.Errorf("SECRET_KEY not found")
 	}
 
 	block, err := aes.NewCipher([]byte(secretKey))
 	if err != nil {
 		return "", err
 	}
-	plainText := []byte(text)
-	cfb := cipher.NewCFBEncrypter(block, []byte(iv))
-	cipherText := make([]byte, len(plainText))
-	cfb.XORKeyStream(cipherText, plainText)
 
-	return Encode(cipherText), nil
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+		return "", err
+	}
+
+	ciphertext := gcm.Seal(nonce, nonce, plainText, nil)
+	return encode(ciphertext), nil
 }
 
-func Decode(s string) ([]byte, error) {
+func decode(s string) ([]byte, error) {
 	data, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
 		return nil, err
@@ -45,24 +52,34 @@ func Decode(s string) ([]byte, error) {
 func Decrypt(text string) (string, error) {
 	secretKey := os.Getenv("SECRET_KEY")
 	if secretKey == "" {
-		return "", fmt.Errorf("secretKey not found")
+		return "", fmt.Errorf("SECRET_KEY not found")
 	}
-	iv := os.Getenv("IV")
-	if iv == "" {
-		return "", fmt.Errorf("initialization vector not found")
+
+	ciphertext, err := decode(text)
+	if err != nil {
+		return "", err
 	}
 
 	block, err := aes.NewCipher([]byte(secretKey))
 	if err != nil {
 		return "", err
 	}
-	cipherText, decodeErr := Decode(text)
-	if decodeErr != nil {
-		return "", fmt.Errorf("failed to decode: %w", decodeErr)
-	}
-	cfb := cipher.NewCFBDecrypter(block, []byte(iv))
-	plainText := make([]byte, len(cipherText))
-	cfb.XORKeyStream(plainText, cipherText)
 
-	return string(plainText), nil
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	nonceSize := gcm.NonceSize()
+	if len(ciphertext) < nonceSize {
+		return "", fmt.Errorf("ciphertext too short")
+	}
+
+	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return "", err
+	}
+
+	return string(plaintext), nil
 }

@@ -34,6 +34,8 @@ type maimaisong struct {
 	DxReMaster string `json:"dx_lev_remas"`
 	Utage      string `json:"lev_utage"`
 	Version    string `json:"version"`
+	Sort       string `json:"sort"`
+	Date       string `json:"date"`
 	Release    string `json:"release"`
 	ImageUrl   string `json:"image_url"`
 }
@@ -89,6 +91,7 @@ func handleEdgeCases(ms *maimaisong) {
 }
 
 // insert if song does not exist
+// update if exists
 func upsertSong(queries *sqlc.Queries, ms maimaisong) (sqlc.Song, error) {
 	// format releaseDate
 	releaseDateString := fmt.Sprintf("20%v-%v-%v", ms.Release[0:2], ms.Release[2:4], ms.Release[4:6])
@@ -106,21 +109,29 @@ func upsertSong(queries *sqlc.Queries, ms maimaisong) (sqlc.Song, error) {
 		if strings.Contains(getSongErr.Error(), "no rows in result set") {
 			// insert if it does not exist in DB
 			newSong, createSongErr := queries.CreateSong(context.Background(), sqlc.CreateSongParams{
-				SongID:      uuid.New(),
+				ID:          uuid.New(),
 				AltKey:      utils.CreateAltKey(ms.Title, ms.Artist),
 				Title:       ms.Title,
 				Artist:      ms.Artist,
 				Genre:       ms.Genre,
 				Bpm:         "",
-				ImageUrl:    "https://maimaidx.jp/maimai-mobile/img/Music/" + ms.ImageUrl,
+				ImageUrl:    ms.ImageUrl,
 				Version:     versionMap[ms.Version[0:3]],
+				Sort:        ms.Sort,
 				IsUtage:     ms.Genre == "宴会場",
 				IsAvailable: true,
+				IsNew:       ms.Date == "NEW",
 				ReleaseDate: pgtype.Date{Time: releaseDate, Valid: true},
 			})
 			if createSongErr != nil {
 				return sqlc.Song{}, fmt.Errorf("failed to create song: %w", createSongErr)
 			}
+
+			uploadErr := utils.UploadImageToS3("https://maimaidx.jp/maimai-mobile/img/Music/" + ms.ImageUrl)
+			if uploadErr != nil {
+				return sqlc.Song{}, fmt.Errorf("failed to upload image to S3: %w", uploadErr)
+			}
+
 			// return newly created song
 			return newSong, nil
 		}
@@ -130,16 +141,18 @@ func upsertSong(queries *sqlc.Queries, ms maimaisong) (sqlc.Song, error) {
 
 	// update song
 	updatedSong, updateErr := queries.UpdateSong(context.Background(), sqlc.UpdateSongParams{
-		SongID:      song.SongID,
+		ID:          song.ID,
 		AltKey:      utils.CreateAltKey(ms.Title, ms.Artist),
 		Title:       ms.Title,
 		Artist:      ms.Artist,
 		Genre:       ms.Genre,
-		Bpm:         "",
-		ImageUrl:    "https://maimaidx.jp/maimai-mobile/img/Music/" + ms.ImageUrl,
+		Bpm:         song.Bpm,
+		ImageUrl:    ms.ImageUrl,
 		Version:     versionMap[ms.Version[0:3]],
+		Sort:        ms.Sort,
 		IsUtage:     ms.Genre == "宴会場",
 		IsAvailable: true,
+		IsNew:       ms.Date == "NEW",
 		ReleaseDate: pgtype.Date{Time: releaseDate, Valid: true},
 		DeleteDate:  song.DeleteDate,
 	})
@@ -218,7 +231,7 @@ func upsertBeatmap(queries *sqlc.Queries, songID uuid.UUID, difficulty, level, b
 		if strings.Contains(getBeatmapErr.Error(), "no rows in result set") {
 			// insert if it does not exist in DB
 			newBeatmap, createBeatmapErr := queries.CreateBeatmap(context.Background(), sqlc.CreateBeatmapParams{
-				BeatmapID:  uuid.New(),
+				ID:         uuid.New(),
 				SongID:     songID,
 				Difficulty: difficulty,
 				Level:      level,
@@ -264,4 +277,5 @@ var versionMap = map[string]string{
 	"240": "BUDDiES",
 	"245": "BUDDiES PLUS",
 	"250": "PRiSM",
+	"255": "PRiSM PLUS",
 }

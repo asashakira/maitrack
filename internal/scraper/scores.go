@@ -3,7 +3,6 @@ package scraper
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/url"
 	"slices"
 	"strconv"
@@ -12,23 +11,15 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	database "github.com/asashakira/maitrack/internal/database/sqlc"
-	"github.com/asashakira/maitrack/pkg/maimaiclient"
 	"github.com/asashakira/maitrack/internal/utils"
+	"github.com/asashakira/maitrack/pkg/maimaiclient"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/schollz/progressbar/v3"
 )
 
 // scrape user scores from maimaidxnet
 // returns nil if nothing to update
-func scrapeScores(queries *database.Queries, segaID, segaPassword string, lastPlayedAt time.Time) ([]database.Score, error) {
-	// Login
-	m := maimaiclient.New()
-	err := m.Login(segaID, segaPassword)
-	if err != nil {
-		return nil, fmt.Errorf("failed to login to maimai: %w", err)
-	}
-
+func scrapeScores(m *maimaiclient.Client, queries *database.Queries, lastPlayedAt time.Time) ([]database.Score, error) {
 	// Fetch records page
 	r, err := m.HTTPClient.Get(maimaiclient.BaseURL + "/record")
 	if err != nil {
@@ -62,9 +53,6 @@ func scrapeScores(queries *database.Queries, segaID, segaPassword string, lastPl
 		return nil, nil
 	}
 
-	// init progressbar
-	bar := progressbar.Default(int64(len(recordIDs)))
-
 	// reverse order to insert from older scores
 	slices.Reverse(recordIDs)
 
@@ -73,13 +61,10 @@ func scrapeScores(queries *database.Queries, segaID, segaPassword string, lastPl
 	for _, recordID := range recordIDs {
 		score, err := scrapeScore(queries, m, recordID)
 		if err != nil {
-			log.Printf("failed scraping score: '%s' %s\n", recordID, err)
+			return nil, fmt.Errorf("failed scraping score: '%s' %s", recordID, err)
 		}
 
 		scores = append(scores, score)
-
-		// +1 progress
-		bar.Add(1)
 
 		// wait to not get ip blocked
 		time.Sleep(1 * time.Second)
@@ -96,9 +81,9 @@ func scrapeScore(queries *database.Queries, m *maimaiclient.Client, recordID str
 	if err != nil {
 		return database.Score{}, fmt.Errorf("request failed: %w", err)
 	}
+	defer r.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(r.Body)
-	defer r.Body.Close()
 	if err != nil {
 		return database.Score{}, err
 	}
@@ -120,15 +105,11 @@ func scrapeScore(queries *database.Queries, m *maimaiclient.Client, recordID str
 		}
 	})
 	maxComboString := strings.Split(comboString, "/")[0]
-	score.MaxCombo, _ = utils.StringToInt32(maxComboString)
+	score.MaxCombo, _ = utils.ConvertStringToInt32(maxComboString)
 
 	// delux score is written as "DxScore / MaxDxScore"
 	dxScores := strings.Split(doc.Find(`.white.p_r_5.f_15.f_r`).Text(), "/")
-	score.DxScore, _ = utils.StringToInt32(utils.RemoveFromString(dxScores[0], `[^\d]`)) // remove non numbers then convert
-
-	// beatmap type
-	// determine by if there are touch notes or not
-	beatmapType := "dx"
+	score.DxScore, _ = utils.ConvertStringToInt32(utils.RemoveFromString(dxScores[0], `[^\d]`)) // remove non numbers then convert
 
 	// note details
 	doc.Find(`.playlog_notes_detail td`).Each(func(i int, s *goquery.Selection) {
@@ -146,11 +127,6 @@ func scrapeScore(queries *database.Queries, m *maimaiclient.Client, recordID str
 			noteType = "Slide"
 			idx = i % 5
 		case 4:
-			if s.Text() == "" {
-				// no touch notes = std map
-				beatmapType = "std"
-				return
-			}
 			noteType = "Touch"
 			idx = i % 5
 		case 5:
@@ -165,9 +141,9 @@ func scrapeScore(queries *database.Queries, m *maimaiclient.Client, recordID str
 	doc.Find(`.playlog_fl_block.m_5.f_r.f_12 .p_t_5`).Each(func(i int, s *goquery.Selection) {
 		switch i {
 		case 0:
-			score.Fast, _ = utils.StringToInt32(s.Text())
+			score.Fast, _ = utils.ConvertStringToInt32(s.Text())
 		case 1:
-			score.Late, _ = utils.StringToInt32(s.Text())
+			score.Late, _ = utils.ConvertStringToInt32(s.Text())
 		}
 	})
 
@@ -181,14 +157,26 @@ func scrapeScore(queries *database.Queries, m *maimaiclient.Client, recordID str
 	score.PlayedAt = pgtype.Timestamp{Time: playedAt, Valid: true}
 
 	// Title
-	title := doc.Find(`.basic_block.m_5.p_5.p_l_10.f_13.break`).Text()
+	doc.Find(`.basic_block.m_5.p_5.p_l_10.f_13.break`).Find(`div`).Remove()
+	title := strings.TrimSpace(doc.Find(`.basic_block.m_5.p_5.p_l_10.f_13.break`).Text())
 
 	// difficulty
 	difficultyImgSrc := doc.Find(`.playlog_top_container.p_r img.playlog_diff.v_b`).AttrOr(`src`, "Not Found")
 	difficulty := getDifficultyFromImgSrc(difficultyImgSrc)
 
+	// beatmap type
+	typeIconImageURL := doc.Find(`img.playlog_music_kind_icon`).AttrOr("src", "Not Found")
+	dxIconImageURL := "https://maimaidx.jp/maimai-mobile/img/music_dx.png"
+	beatmapType := "std"
+	if typeIconImageURL == dxIconImageURL {
+		beatmapType = "dx"
+	} else if difficulty == "utage" {
+		beatmapType = "utage"
+	}
+
 	// imageURL
 	imageURL := doc.Find(`img.music_img`).AttrOr(`src`, "Not Found")
+	imageURL = strings.TrimPrefix(imageURL, "https://maimaidx.jp/maimai-mobile/img/Music/")
 
 	// ids
 	songID, beatmapID, err := getSongAndBeatmapID(queries, title, difficulty, beatmapType, imageURL)
@@ -232,6 +220,10 @@ func getSongAndBeatmapID(queries *database.Queries, title, difficulty, beatmapTy
 		return uuid.Nil, uuid.Nil, fmt.Errorf("song not found: %w", getSongErr)
 	}
 
+	if len(songs) < 1 {
+		return uuid.Nil, uuid.Nil, fmt.Errorf("song with title %s not found", title)
+	}
+
 	// only song title = 'Link' returns two songs
 	// for now...
 	for _, s := range songs {
@@ -242,15 +234,15 @@ func getSongAndBeatmapID(queries *database.Queries, title, difficulty, beatmapTy
 
 		// get beatmap
 		beatmap, getBeatmapErr := queries.GetBeatmapBySongIDDifficultyAndType(context.Background(), database.GetBeatmapBySongIDDifficultyAndTypeParams{
-			SongID:     s.SongID,
+			SongID:     s.ID,
 			Difficulty: difficulty,
 			Type:       beatmapType,
 		})
 		if getBeatmapErr != nil {
-			return uuid.Nil, uuid.Nil, fmt.Errorf("beatmap not found: %w", getBeatmapErr)
+			return uuid.Nil, uuid.Nil, fmt.Errorf("beatmap with details {%s, %s, %s, %s} not found: %w", s.ID, s.Title, difficulty, beatmapType, getBeatmapErr)
 		}
 		songID = beatmap.SongID
-		beatmapID = beatmap.BeatmapID
+		beatmapID = beatmap.ID
 	}
 	return songID, beatmapID, nil
 }
@@ -269,15 +261,9 @@ func getDifficultyFromImgSrc(imgSrc string) string {
 		return "master"
 	case "diff_remaster.png":
 		return "remaster"
+	case "diff_utage.png":
+		return "utage"
 	default:
 		return ""
 	}
-}
-
-// if the beatmap has Touch notes -> dx beatmap
-func determineBeatmapType(headerText string) string {
-	if strings.Contains(headerText, "Touch") {
-		return "dx"
-	}
-	return "std"
 }
