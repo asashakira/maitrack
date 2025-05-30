@@ -26,3 +26,10 @@ set
     updated_at = now()
 where user_uuid = $1
 returning *;
+
+-- name: UpdateProfileImageUrl :exec
+update user_metadata
+set
+    profile_image_url = $2,
+    updated_at = now()
+where user_uuid = $1;

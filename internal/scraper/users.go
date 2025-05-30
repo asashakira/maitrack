@@ -80,7 +80,7 @@ func ScrapeUser(m *maimaiclient.Client, queries *database.Queries, user ScrapeUs
 	}
 
 	// scrape user data and save to database
-	scrapedUserData, scrapeErr := ScrapeUserData(m)
+	scrapedUserData, scrapeErr := ScrapePlayerDataPage(m)
 	if scrapeErr != nil {
 		log.Println(scrapeErr)
 		return scrapeErr
@@ -94,6 +94,14 @@ func ScrapeUser(m *maimaiclient.Client, queries *database.Queries, user ScrapeUs
 	})
 	if createUserDataErr != nil {
 		return fmt.Errorf("failed to create user data for '%s': %s", user.UserID, createUserDataErr)
+	}
+
+	updateProfileImageUrlErr := queries.UpdateProfileImageUrl(context.Background(), database.UpdateProfileImageUrlParams{
+		UserUuid:        user.ID,
+		ProfileImageUrl: scrapedUserData.ProfileImageUrl,
+	})
+	if updateProfileImageUrlErr != nil {
+		return fmt.Errorf("failed to update profile image url: %s", updateProfileImageUrlErr)
 	}
 
 	// scrape scores
@@ -142,44 +150,74 @@ func ScrapeUser(m *maimaiclient.Client, queries *database.Queries, user ScrapeUs
 	return nil
 }
 
+type PlayerData struct {
+	Rating          int32
+	SeasonPlayCount int32
+	TotalPlayCount  int32
+	ProfileImageUrl pgtype.Text
+}
+
 // scrape rating and playcounts from maimaidxnet
-func ScrapeUserData(m *maimaiclient.Client) (database.UserDatum, error) {
+func ScrapePlayerDataPage(m *maimaiclient.Client) (PlayerData, error) {
 	// Fetch playerData page
 	r, err := m.HTTPClient.Get(maimaiclient.BaseURL + "/playerData")
 	if err != nil {
-		return database.UserDatum{}, fmt.Errorf("request failed: %w", err)
+		return PlayerData{}, fmt.Errorf("request failed: %w", err)
 	}
 	defer r.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(r.Body)
 	if err != nil {
-		return database.UserDatum{}, err
+		return PlayerData{}, err
 	}
+
+	// profile image
+	imageUrl := doc.Find("img.w_112.f_l").AttrOr(`src`, "Not Found")
 
 	// rating
 	rating, atoiErr := utils.ConvertStringToInt32(doc.Find(".rating_block").Text())
 	if atoiErr != nil {
-		return database.UserDatum{}, atoiErr
+		return PlayerData{}, atoiErr
 	}
 
 	// play count
 	playCounts := strings.Split(doc.Find(".m_5.m_b_5.t_r.f_12").Text(), "：")
 	seasonPlayCount, atoiErr := utils.ConvertStringToInt32(utils.RemoveFromString(playCounts[1], `[^\d+]`))
 	if atoiErr != nil {
-		return database.UserDatum{}, fmt.Errorf("failed to atoi seasonPlayCount: %w", atoiErr)
+		return PlayerData{}, fmt.Errorf("failed to atoi seasonPlayCount: %w", atoiErr)
 	}
-	TotalPlayCount, atoiErr := utils.ConvertStringToInt32(utils.RemoveFromString(playCounts[2], `[^\d+]`))
+	totalPlayCount, atoiErr := utils.ConvertStringToInt32(utils.RemoveFromString(playCounts[2], `[^\d+]`))
 	if atoiErr != nil {
-		return database.UserDatum{}, fmt.Errorf("failed to atoi seasonPlayCount: %w", atoiErr)
+		return PlayerData{}, fmt.Errorf("failed to atoi seasonPlayCount: %w", atoiErr)
 	}
 
-	userData := database.UserDatum{
+	playerData := PlayerData{
 		Rating:          rating,
 		SeasonPlayCount: seasonPlayCount,
-		TotalPlayCount:  TotalPlayCount,
+		TotalPlayCount:  totalPlayCount,
+		ProfileImageUrl: pgtype.Text{String: imageUrl, Valid: true},
 	}
 
-	return userData, nil
+	return playerData, nil
+}
+
+func ScrapeProfileImageUrl(m *maimaiclient.Client) (string, error) {
+	// Fetch playerData page
+	r, err := m.HTTPClient.Get(maimaiclient.BaseURL + "/playerData")
+	if err != nil {
+		return "", fmt.Errorf("request failed: %w", err)
+	}
+	defer r.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(r.Body)
+	if err != nil {
+		return "", err
+	}
+
+	// profile image
+	imageUrl := doc.Find("img.w_112.f_l").AttrOr(`src`, "Not Found")
+
+	return imageUrl, nil
 }
 
 // insert new score to database
